@@ -6,14 +6,14 @@ Bakdrop (backup drop) is designed for system administrators who need to share ba
 
 ## Features
 
-- 🔐 **Multi-user support** - Each user has their own isolated folder
-- 🔗 **Temporary share links** - Generate random links with optional expiration
-- 🔒 **Password protection** - Optionally protect links with passwords
-- 🗑️ **Auto-deletion** - Files can be automatically deleted after download
-- 📦 **Folder sharing** - Share entire folders (streamed as ZIP)
-- 🌍 **Multi-language** - English and Polish UI
-- 🎨 **Themes** - Dark and Light modes
-- ⚡ **Efficient streaming** - Large file support with chunked streaming and Range requests
+- **Multi-user support** - Each user has their own isolated folder
+- **Temporary share links** - Generate random links with optional expiration
+- **Password protection** - Optionally protect links with passwords
+- **Auto-deletion** - Files can be automatically deleted after download
+- **Folder sharing** - Share entire folders (streamed as ZIP)
+- **Multi-language** - English and Polish UI
+- **Themes** - Dark and Light modes
+- **Efficient streaming** - Large file support with chunked streaming and Range requests
 
 ## Requirements
 
@@ -191,14 +191,14 @@ Settings are stored per-user and persist across sessions.
 
 ## Security Features
 
-- ✅ Per-user folder isolation (path traversal protection)
-- ✅ Password hashing (bcrypt)
-- ✅ Prepared SQL statements (SQL injection protection)
-- ✅ Session-based authentication
-- ✅ XSS protection (htmlspecialchars on all outputs)
-- ✅ Random 16-character share hashes
-- ✅ Automatic cleanup of expired links
-- ✅ No web UI for user management (SSH access required)
+- Per-user folder isolation (path traversal protection)
+- Password hashing (bcrypt)
+- Prepared SQL statements (SQL injection protection)
+- Session-based authentication
+- XSS protection (htmlspecialchars on all outputs)
+- Random 16-character share hashes
+- Automatic cleanup of expired links
+- No web UI for user management (SSH access required)
 
 ## File Streaming
 
