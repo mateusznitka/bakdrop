@@ -1,12 +1,15 @@
 # Bakdrop
 
-Simple and secure file sharing application for backup restoration and temporary file distribution.
+*Work in progress*
 
-Bakdrop (backup drop) is designed for system administrators who need to share backup files temporarily with end users.
+Simple file sharing web app for temporary file distribution.
+
+Bakdrop (backup drop) is designed for administrators who need to share files temporarily with end users.
+
+Main scenario is to share data restored from backups to end users by self-expiring link with option do auto-delete data after downloading.
 
 ## Features
 
-- **Multi-user support** - Each user has their own isolated folder
 - **Temporary share links** - Generate random links with optional expiration
 - **Password protection** - Optionally protect links with passwords
 - **Auto-deletion** - Files can be automatically deleted after download
@@ -14,6 +17,7 @@ Bakdrop (backup drop) is designed for system administrators who need to share ba
 - **Multi-language** - English and Polish UI
 - **Themes** - Dark and Light modes
 - **Efficient streaming** - Large file support with chunked streaming and Range requests
+- **Multi-user support** - Each user has their own isolated folder (but user management is to do)
 
 ## Requirements
 
@@ -51,8 +55,8 @@ If you don't have Composer installed, get it from [getcomposer.org](https://getc
 Edit `config.php`:
 
 ```php
-define('FILES_PATH', '/fsr');                    // Root directory for files
-define('BASE_URL', 'http://10.10.99.251');       // Your server URL
+define('FILES_PATH', '/your_base_data_directory');                    // Root directory for files
+define('BASE_URL', 'http://IP_of_your_server');       // Your server URL
 ```
 
 ### 4. Set permissions
@@ -66,97 +70,9 @@ chown www-data:www-data .
 chmod 755 .
 ```
 
-### 5. Setup cron (for auto-delete files)
-
-Bakdrop can automatically delete files after a specified time. To enable this feature, setup a cron job:
-
-```bash
-# Edit crontab
-crontab -e
-
-# Add this line (runs every hour):
-0 * * * * php /var/www/html/cleanup.php >> /var/log/bakdrop-cleanup.log 2>&1
-```
-
-**Note:** Auto-delete is optional. Without cron:
-- Link expiration works normally (checked when user downloads)
-- "Delete after download" works normally
-- "Auto-delete file after X hours" will NOT work (requires cron)
-
-### 6. Initial setup
+### 5. Initial setup
 
 Navigate to `http://yourserver.com/setup.php` in your browser and create your first admin account.
-
-## User Management
-
-All user management is done via CLI for security. The web UI has no user management interface.
-
-### Create a user
-
-```bash
-php manage.php create username password path [language] [theme]
-```
-
-**Examples:**
-
-```bash
-# User with root access (sees all FILES_PATH)
-php manage.php create admin SecurePass123 '' en dark
-
-# User with restricted access to /finance folder
-php manage.php create finance MyPass456 finance pl light
-
-# User with access to nested folder
-php manage.php create backup-ops P@ssw0rd backups/team1 en dark
-```
-
-**Parameters:**
-- `username` - Unique username
-- `password` - Minimum 8 characters
-- `path` - Relative to FILES_PATH (use `''` for root access)
-- `language` - `en` or `pl` (default: `en`)
-- `theme` - `dark` or `light` (default: `dark`)
-
-### List all users
-
-```bash
-php manage.php list
-```
-
-Output:
-```
-ID    Username            Path                          Lang    Theme     Created
--------------------------------------------------------------------------------------------------
-1     admin               / (root)                      en      dark      2024-04-30 10:00
-2     finance             finance                       pl      light     2024-04-30 10:15
-```
-
-### Delete a user
-
-```bash
-php manage.php delete username
-```
-
-**Note:** 
-- Cannot delete the last user
-- User's shares are preserved (creator shown as "Deleted user")
-- Requires confirmation
-
-### Change user's folder path
-
-```bash
-php manage.php set-path username new-path
-```
-
-**Example:**
-
-```bash
-# Give user access to root
-php manage.php set-path finance ''
-
-# Restrict user to specific folder
-php manage.php set-path admin backups/critical
-```
 
 ## Usage
 
@@ -178,9 +94,9 @@ End users receive a share link (e.g., `http://yourserver.com/share.php?h=abc123d
 
 1. Click the link
 2. Enter password if required
-3. Download file or folder (auto-zipped)
+3. Download file or folder
 
-## User Settings
+## Admin Settings
 
 Users can customize their experience via **Settings** dropdown:
 
@@ -214,56 +130,3 @@ Settings are stored per-user and persist across sessions.
 - On-the-fly ZIP creation using ZipStream
 - No temporary files created
 - Memory-efficient streaming
-
-## Database Structure
-
-### users table
-```sql
-id INTEGER PRIMARY KEY
-username TEXT UNIQUE
-password TEXT (bcrypt hash)
-language TEXT (en/pl)
-theme TEXT (dark/light)
-allowed_path TEXT (relative to FILES_PATH)
-created_at INTEGER (unix timestamp)
-```
-
-### shares table
-```sql
-id INTEGER PRIMARY KEY
-hash TEXT UNIQUE (16 chars)
-file_path TEXT
-password TEXT (bcrypt hash, nullable)
-expires_at INTEGER (unix timestamp, nullable)
-delete_after_download INTEGER (0/1)
-download_count INTEGER
-created_at INTEGER (unix timestamp)
-created_by INTEGER (foreign key to users)
-```
-
-## Translations
-
-Translations are stored in `lang/` folder:
-- `lang/en.json` - English
-- `lang/pl.json` - Polish
-
-To add a new language:
-1. Copy `lang/en.json` to `lang/xx.json`
-2. Translate all strings
-3. Add language option to user preferences in `admin.php`
-
-## License
-
-MIT License - See LICENSE file
-
-## Contributing
-
-1. Fork the repository
-2. Create feature branch
-3. Commit changes
-4. Push to branch
-5. Create Pull Request
-
-## Support
-
-For issues and questions, please use GitHub Issues.
