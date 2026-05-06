@@ -1,5 +1,7 @@
 # Bakdrop
 
+![Bakdrop]("assets/logo.png")
+
 *Work in progress*
 
 Simple file sharing web app for temporary file distribution.
@@ -17,7 +19,7 @@ Main scenario is to share data restored from backups to end users by self-expiri
 - **Multi-language** - English and Polish UI
 - **Themes** - Dark and Light modes
 - **Efficient streaming** - Large file support with chunked streaming and Range requests
-- **Multi-user support** - Each user has their own isolated folder (but user management is to do)
+- **Multi-user support** - Each user has their own isolated folder (but proper user management isn't completed yet)
 
 ## Requirements
 
@@ -96,16 +98,7 @@ End users receive a share link (e.g., `http://yourserver.com/share.php?h=abc123d
 2. Enter password if required
 3. Download file or folder
 
-## Admin Settings
-
-Users can customize their experience via **Settings** dropdown:
-
-- **Preferences** - Change language and theme
-- **Change Password** - Update account password
-
-Settings are stored per-user and persist across sessions.
-
-## Security Features
+## Security 
 
 - Per-user folder isolation (path traversal protection)
 - Password hashing (bcrypt)
