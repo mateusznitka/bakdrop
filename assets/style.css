@@ -1,0 +1,526 @@
+/* ===========================
+   File Share - Main Stylesheet
+   =========================== */
+
+/* === CSS Variables === */
+:root {
+    --primary-color: #138076;
+    --primary-hover: #0f6158;
+    --danger-color: #c74444;
+    --danger-hover: #a83535;
+    --secondary-color: #138076;
+    --secondary-hover: #0f6158;
+}
+
+/* === Dark Theme (Default) === */
+body[data-theme="dark"],
+body:not([data-theme]) {
+    --bg-color: #0f1419;
+    --bg-secondary: #1c2430;
+    --text-color: #e0e0e0;
+    --text-secondary: #8b949e;
+    --border-color: #30363d;
+    --input-bg: #1c2430;
+    --input-border: #30363d;
+    --modal-overlay: rgba(0, 0, 0, 0.8);
+    --hover-bg: #138076;
+}
+
+/* === Light Theme === */
+body[data-theme="light"] {
+    --bg-color: #f4f4f4;
+    --bg-secondary: #f9f9f9;
+    --text-color: #1f2937;
+    --text-secondary: #6b7280;
+    --border-color: #dcdcdc;
+    --input-bg: #fff;
+    --input-border: #dcdcdc;
+    --modal-overlay: rgba(0, 0, 0, 0.5);
+    --hover-bg: #138076;
+}
+
+/* === Reset & Base === */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+/* === Container === */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* === Header === */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.header-logo {
+    height: 40px;
+    width: auto;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* === Buttons === */
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+    line-height: 1.5;
+    box-sizing: border-box;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: var(--secondary-hover);
+}
+
+.btn-danger {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: var(--danger-hover);
+}
+
+.btn-small {
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+.btn-large {
+    padding: 15px 30px;
+    font-size: 16px;
+}
+
+.btn-copy {
+    padding: 6px 12px;
+    font-size: 12px;
+    margin-left: 5px;
+}
+
+.link-with-copy {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.link-with-copy input {
+    flex: 1;
+}
+
+/* === Dropdown === */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-toggle {
+    cursor: pointer;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background-color: var(--bg-secondary);
+    min-width: 180px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    z-index: 1000;
+    margin-top: 5px;
+}
+
+.dropdown-content.show {
+    display: block;
+}
+
+.dropdown-content a {
+    display: block;
+    padding: 12px 16px;
+    text-decoration: none;
+    color: var(--text-color);
+    transition: background-color 0.2s;
+}
+
+.dropdown-content a:hover {
+    background-color: var(--hover-bg);
+}
+
+.dropdown-content .user-info {
+    padding: 12px 16px;
+    color: var(--text-color);
+    font-size: 14px;
+    border-bottom: 2px solid var(--border-color);
+    pointer-events: none;
+    font-weight: 400;
+}
+
+/* === Breadcrumb === */
+.breadcrumb {
+    margin-bottom: 15px;
+    padding: 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.breadcrumb a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.breadcrumb a:hover {
+    text-decoration: underline;
+}
+
+/* === Section === */
+.section {
+    margin-bottom: 40px;
+    background-color: var(--bg-secondary);
+    padding: 20px;
+    border-radius: 8px;
+    border: 2px solid var(--border-color);
+}
+
+.section h2 {
+    margin-bottom: 20px;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.section p {
+    margin-bottom: 10px;
+}
+
+/* === Tables === */
+.file-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--bg-color);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.file-table thead {
+    background-color: var(--bg-secondary);
+}
+
+.file-table th {
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.file-table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.file-table tbody tr:hover {
+    background-color: var(--bg-secondary);
+}
+
+.file-table a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.file-table a:hover {
+    text-decoration: underline;
+}
+
+/* === Forms === */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.form-group input[type="text"],
+.form-group input[type="password"],
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid var(--input-border);
+    border-radius: 4px;
+    font-size: 14px;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    transition: border-color 0.2s;
+}
+
+.form-group input[type="text"]:focus,
+.form-group input[type="password"]:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.form-group input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+.form-group small {
+    display: block;
+    margin-top: 5px;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* === Login Box === */
+.login-box,
+.download-box {
+    max-width: 450px;
+    margin: 100px auto;
+    padding: 40px;
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    border: 2px solid var(--border-color);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.login-box h1,
+.download-box h1 {
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 28px;
+}
+
+.login-logo {
+    height: 50px;
+    width: auto;
+}
+
+.login-box h2,
+.download-box h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--text-secondary);
+}
+
+.login-box p,
+.download-box p {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* === Download Page Specific === */
+.file-info {
+    text-align: center;
+    margin: 30px 0;
+}
+
+.file-icon {
+    font-size: 64px;
+    margin-bottom: 15px;
+}
+
+.file-size {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.expiry-info {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin: 15px 0;
+}
+
+.warning {
+    background-color: rgba(255, 152, 0, 0.1);
+    border: 2px solid #ff9800;
+    border-radius: 4px;
+    padding: 15px;
+    margin: 20px 0;
+    text-align: center;
+    color: #ff9800;
+}
+
+.download-info {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-top: 15px;
+}
+
+.download-box .btn-large {
+    display: block;
+    margin: 0 auto;
+    text-align: center;
+}
+
+/* === Modals === */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: var(--modal-overlay);
+}
+
+.modal-content {
+    background-color: var(--bg-secondary);
+    margin: 5% auto;
+    padding: 30px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    width: 90%;
+    max-width: 600px;
+    position: relative;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content h2 {
+    margin-bottom: 20px;
+    font-size: 22px;
+}
+
+.close {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    color: var(--text-secondary);
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close:hover {
+    color: var(--text-color);
+}
+
+/* === Alerts & Messages === */
+.error {
+    background-color: rgba(244, 67, 54, 0.1);
+    border: 2px solid var(--danger-color);
+    color: var(--danger-color);
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.success {
+    background-color: rgba(76, 175, 80, 0.1);
+    border: 2px solid var(--primary-color);
+    color: var(--primary-color);
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .header-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .file-table {
+        font-size: 13px;
+    }
+    
+    .file-table th,
+    .file-table td {
+        padding: 8px;
+    }
+    
+    .login-box,
+    .download-box {
+        margin: 20px auto;
+        padding: 20px;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 10% auto;
+        padding: 20px;
+    }
+    
+    .dropdown-content {
+        right: auto;
+        left: 0;
+    }
+}
