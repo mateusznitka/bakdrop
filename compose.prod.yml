@@ -1,0 +1,16 @@
+services:
+  app:
+    container_name: bakdrop
+    image: 
+    volumes:
+      - bakdrop_data:/var/lib/bakdrop
+      - bakdrop_files:/fsr
+      - vendor:/var/www/html/vendor
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+
+volumes:
+  bakdrop_data:
+  bakdrop_files:
+  vendor:

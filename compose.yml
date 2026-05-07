@@ -1,7 +1,12 @@
 services:
   app:
+    container_name: bakdrop
     build: .
     volumes:
       - .:/var/www/html
+      - vendor:/var/www/html/vendor
     ports:
       - "8080:80"
+
+volumes:
+  vendor:
