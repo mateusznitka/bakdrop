@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once 'helpers.php';
 
 class Database {
     public $db;
@@ -205,6 +205,10 @@ class Database {
             $shares[] = $row;
         }
         return $shares;
+    }
+
+    public function hasUsers(){
+        return $this->db->querySingle('SELECT COUNT(*) FROM users') > 0;
     }
 }
 ?>

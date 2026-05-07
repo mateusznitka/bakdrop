@@ -1,15 +1,15 @@
 <?php
-require_once 'config.php';
+require_once 'helpers.php';
 require_once 'db.php';
 
 $db = new Database();
 
 // Redirect to setup if no users exist
-$userCount = $db->db->querySingle('SELECT COUNT(*) FROM users');
-if ($userCount == 0) {
+if (!$db->hasUsers()) {
     header('Location: setup.php');
     exit;
 }
+
 
 // Redirect to admin site if already logged in
 if (isLoggedIn()) {
@@ -18,7 +18,6 @@ if (isLoggedIn()) {
 }
 
 $lang = loadLanguage(DEFAULT_LANG);
-$GLOBALS['lang'] = $lang; // Make available for t() helper
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

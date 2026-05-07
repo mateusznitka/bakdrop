@@ -1,9 +1,8 @@
 <?php
-require_once 'config.php';
+require_once 'helpers.php';
 require_once 'db.php';
 
 $lang = loadLanguage(DEFAULT_LANG);
-$GLOBALS['lang'] = $lang; // Make available for t() helper
 
 $hash = $_GET['h'] ?? '';
 $error = '';

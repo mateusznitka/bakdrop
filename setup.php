@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once 'helpers.php';
 require_once 'db.php';
 
 $db = new Database();
@@ -10,12 +10,10 @@ $row = $result->fetchArray(SQLITE3_ASSOC);
 
 if ($row['count'] > 0) {
     $lang = loadLanguage(DEFAULT_LANG);
-    $GLOBALS['lang'] = $lang;
     die(t('setup_complete') . ' <a href="auth.php">' . t('setup_login_link') . '</a>.');
 }
 
 $lang = loadLanguage(DEFAULT_LANG);
-$GLOBALS['lang'] = $lang; // Make available for t() helper
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

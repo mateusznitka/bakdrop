@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once 'helpers.php';
 require_once 'db.php';
 
 // Composer autoload for ZipStream
@@ -8,7 +8,6 @@ if (file_exists(__DIR__ . '/vendor/autoload.php')) {
 }
 
 $lang = loadLanguage(DEFAULT_LANG);
-$GLOBALS['lang'] = $lang;
 
 $hash = $_GET['h'] ?? '';
 
@@ -182,26 +181,4 @@ if ($share['delete_after_download']) {
 
 exit;
 
-// Helper function to delete directory
-function deleteDirectory($dir) {
-    if (!file_exists($dir)) {
-        return true;
-    }
-    
-    if (!is_dir($dir)) {
-        return unlink($dir);
-    }
-    
-    foreach (scandir($dir) as $item) {
-        if ($item == '.' || $item == '..') {
-            continue;
-        }
-        
-        if (!deleteDirectory($dir . DIRECTORY_SEPARATOR . $item)) {
-            return false;
-        }
-    }
-    
-    return rmdir($dir);
-}
 ?>

@@ -1,12 +1,11 @@
 <?php
-require_once 'config.php';
+require_once 'helpers.php';
 require_once 'db.php';
 
 $db = new Database();
 
 // Redirect to setup if no users exist
-$userCount = $db->db->querySingle('SELECT COUNT(*) FROM users');
-if ($userCount == 0) {
+if (!$db->hasUsers()) {
     header('Location: setup.php');
     exit;
 }
@@ -18,7 +17,6 @@ $db->cleanup(); // Remove expired shares
 // Get current user and load their language
 $user = $db->getUser(getCurrentUser());
 $lang = loadLanguage($user['language']);
-$GLOBALS['lang'] = $lang; // Make available for t() helper
 
 // Scan directory function
 function scanDirectory($dir, $baseDir = null) {
@@ -68,12 +66,11 @@ $userBasePath = FILES_PATH . '/' . ltrim($user['allowed_path'], '/');
 $userBasePath = rtrim($userBasePath, '/');
 
 $currentPath = $_GET['path'] ?? '';
-$fullPath = $userBasePath . '/' . ltrim($currentPath, '/');
-$fullPath = realpath($fullPath);
 
 // Security: prevent path traversal outside allowed_path
-if ($fullPath === false || strpos($fullPath, realpath($userBasePath)) !== 0) {
-    $fullPath = realpath($userBasePath);
+$fullPath = resolveUserPath($user['allowed_path'], $currentPath);
+if ($fullPath === false) {
+    $fullPath = resolveUserPath($user['allowed_path'], '');
     $currentPath = '';
 }
 

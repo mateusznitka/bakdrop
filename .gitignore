@@ -5,3 +5,5 @@ vendor/
 node_modules/
 .docker/
 *.sql
+cleanup.php
+manage.php

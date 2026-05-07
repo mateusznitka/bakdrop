@@ -1,12 +1,11 @@
 <?php
-require_once 'config.php';
+require_once 'helpers.php';
 require_once 'db.php';
 
 $db = new Database();
 
 // Redirect to setup if no users exist
-$userCount = $db->db->querySingle('SELECT COUNT(*) FROM users');
-if ($userCount == 0) {
+if (!$db->hasUsers()) {
     header('Location: setup.php');
     exit;
 }
@@ -26,13 +25,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
     
     // Get user's allowed path
     $user = $db->getUser(getCurrentUser());
-    $userBasePath = FILES_PATH . '/' . ltrim($user['allowed_path'], '/');
-    $userBasePath = rtrim($userBasePath, '/');
+    $fullPath = resolveUserPath($user['allowed_path'], $path);
     
-    $fullPath = realpath($userBasePath . '/' . $path);
-    
-    // check if user is in allowed path
-    if ($fullPath === false || strpos($fullPath, realpath($userBasePath)) !== 0) {
+    if ($fullPath === false) {
         echo json_encode(['success' => false, 'error' => 'Invalid path']);
         exit;
     }
@@ -130,14 +125,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $isDir = isset($_POST['is_dir']) && $_POST['is_dir'] === '1';
     
     // Get user's allowed path
+    // Get user's allowed path
     $user = $db->getUser(getCurrentUser());
-    $userBasePath = FILES_PATH . '/' . ltrim($user['allowed_path'], '/');
-    $userBasePath = rtrim($userBasePath, '/');
+    $fullPath = resolveUserPath($user['allowed_path'], $path);
     
-    $fullPath = realpath($userBasePath . '/' . $path);
-    
-    // check if user is in allowed path
-    if ($fullPath === false || strpos($fullPath, realpath($userBasePath)) !== 0) {
+    if ($fullPath === false) {
         echo json_encode(['success' => false, 'error' => 'Invalid path']);
         exit;
     }
@@ -175,29 +167,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         echo json_encode(['success' => false, 'error' => $e->getMessage()]);
     }
     exit;
-}
-
-// Helper function to recursively delete directory
-function deleteDirectory($dir) {
-    if (!file_exists($dir)) {
-        return true;
-    }
-    
-    if (!is_dir($dir)) {
-        return unlink($dir);
-    }
-    
-    foreach (scandir($dir) as $item) {
-        if ($item == '.' || $item == '..') {
-            continue;
-        }
-        
-        if (!deleteDirectory($dir . DIRECTORY_SEPARATOR . $item)) {
-            return false;
-        }
-    }
-    
-    return rmdir($dir);
 }
 
 echo json_encode(['success' => false, 'error' => 'Invalid request']);
