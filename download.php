@@ -7,11 +7,14 @@ if (file_exists(__DIR__ . '/vendor/autoload.php')) {
     require_once __DIR__ . '/vendor/autoload.php';
 }
 
+$lang = loadLanguage(DEFAULT_LANG);
+$GLOBALS['lang'] = $lang;
+
 $hash = $_GET['h'] ?? '';
 
 if (!$hash) {
     http_response_code(400);
-    die('Invalid link');
+    die(tr('invalid_link'));
 }
 
 $db = new Database();
@@ -19,20 +22,20 @@ $share = $db->getShare($hash);
 
 if (!$share) {
     http_response_code(404);
-    die('Link does not exist or has expired');
+    die(tr('link_not_found'));
 }
 
 // Check expiration
 if ($share['expires_at'] && $share['expires_at'] < time()) {
     $db->deleteShare($hash);
     http_response_code(410);
-    die('Link has expired');
+    die(tr('link_expired'));
 }
 
 // Check password
 if ($share['password'] && !isset($_SESSION['share_' . $hash])) {
     http_response_code(403);
-    die('Password required');
+    die(tr('password_required'));
 }
 
 $fullPath = realpath(FILES_PATH . '/' . $share['file_path']);
@@ -40,12 +43,12 @@ $fullPath = realpath(FILES_PATH . '/' . $share['file_path']);
 // Security check
 if ($fullPath === false || strpos($fullPath, realpath(FILES_PATH)) !== 0) {
     http_response_code(403);
-    die('Access denied');
+    die(tr('access_denied'));
 }
 
 if (!file_exists($fullPath)) {
     http_response_code(404);
-    die('File does not exist');
+    die(tr('file_not_found'));
 }
 
 // Increment download counter

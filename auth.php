@@ -17,8 +17,7 @@ if (isLoggedIn()) {
     exit;
 }
 
-// Default to English for login page
-$lang = loadLanguage('en');
+$lang = loadLanguage(DEFAULT_LANG);
 $GLOBALS['lang'] = $lang; // Make available for t() helper
 $error = '';
 

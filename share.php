@@ -2,8 +2,7 @@
 require_once 'config.php';
 require_once 'db.php';
 
-// Default to English for public share pages
-$lang = loadLanguage('en');
+$lang = loadLanguage(DEFAULT_LANG);
 $GLOBALS['lang'] = $lang; // Make available for t() helper
 
 $hash = $_GET['h'] ?? '';

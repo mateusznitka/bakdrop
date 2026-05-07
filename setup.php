@@ -9,14 +9,12 @@ $result = $db->db->query('SELECT COUNT(*) as count FROM users');
 $row = $result->fetchArray(SQLITE3_ASSOC);
 
 if ($row['count'] > 0) {
-    // Load language for the message
-    $lang = loadLanguage('en');
+    $lang = loadLanguage(DEFAULT_LANG);
     $GLOBALS['lang'] = $lang;
     die(t('setup_complete') . ' <a href="auth.php">' . t('setup_login_link') . '</a>.');
 }
 
-// Default to English for setup
-$lang = loadLanguage('en');
+$lang = loadLanguage(DEFAULT_LANG);
 $GLOBALS['lang'] = $lang; // Make available for t() helper
 $error = '';
 
