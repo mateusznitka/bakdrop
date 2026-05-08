@@ -68,7 +68,7 @@ date_default_timezone_set('Europe/Warsaw');          // Timezone is used for sho
 #### 4. Set permissions
 
 
-# Ensure web server can write to database and root file directory
+Ensure web server can write to database and root file directory
 ```
 chown www-data:www-data /path/to-your.db
 chmod 755 .
