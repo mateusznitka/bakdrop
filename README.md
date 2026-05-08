@@ -23,14 +23,16 @@ Main scenario is to share data restored from backups to end users by self-expiri
 
 ## Requirements
 
-- PHP 8.4+
+- PHP 8.3+
 - SQLite3
-- Apache/Nginx
+- Apache
 - Composer (for ZipStream dependency)
 
 ## Installation
 
-### 1. Clone or download
+This section is not completed yet, it's draft for now. Docker installation tbd
+
+#### 1. Clone or download
 
 ```bash
 git clone https://github.com/yourusername/bakdrop.git
@@ -39,7 +41,7 @@ cd bakdrop
 
 Or extract the ZIP file to your web server directory.
 
-### 2. Install dependencies
+#### 2. Install dependencies
 
 The application requires ZipStream library for folder downloads. Install it using Composer:
 
@@ -50,31 +52,31 @@ composer install
 **Note:** `composer.json` and `composer.lock` are included in the package. This will install:
 - `maennchen/zipstream-php` v3.2
 
-If you don't have Composer installed, get it from [getcomposer.org](https://getcomposer.org/)
 
-### 3. Configure
+#### 3. Configure
 
-Edit `config.php`:
+Edit `config.example.php` and rename it to `config.php`:
 
 ```php
-define('FILES_PATH', '/your_base_data_directory');                    // Root directory for files
-define('BASE_URL', 'http://IP_of_your_server');       // Your server URL
+define('DB_PATH', '/var/lib/bakdrop/shares.db');    // Database path, it will be created there
+define('FILES_PATH', '/path-to-your-data-dir');      // Root directory for all files
+define('BASE_URL', 'https://your-domain-or-ip');    // Base URL for share links
+define('DEFAULT_LANG', 'en');                        // Default language for public pages (en, pl)
+date_default_timezone_set('Europe/Warsaw');          // Timezone is used for showing expiration time in share links
 ```
 
-### 4. Set permissions
+#### 4. Set permissions
 
-```bash
-# Make manage.php executable
-chmod +x manage.php
 
-# Ensure web server can write to database
-chown www-data:www-data .
+# Ensure web server can write to database and root file directory
+```
+chown www-data:www-data /path/to-your.db
 chmod 755 .
 ```
 
-### 5. Initial setup
+#### 5. Initial setup
 
-Navigate to `http://yourserver.com/setup.php` in your browser and create your first admin account.
+Navigate to `https://yourserver.com/setup.php` in your browser and create your first admin account.
 
 ## Usage
 
@@ -97,17 +99,6 @@ End users receive a share link (e.g., `http://yourserver.com/share.php?h=abc123d
 1. Click the link
 2. Enter password if required
 3. Download file or folder
-
-## Security 
-
-- Per-user folder isolation (path traversal protection)
-- Password hashing (bcrypt)
-- Prepared SQL statements (SQL injection protection)
-- Session-based authentication
-- XSS protection (htmlspecialchars on all outputs)
-- Random 16-character share hashes
-- Automatic cleanup of expired links
-- No web UI for user management (SSH access required)
 
 ## File Streaming
 
