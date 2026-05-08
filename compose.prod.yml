@@ -1,13 +1,15 @@
 services:
   app:
     container_name: bakdrop
-    image: 
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
     volumes:
       - bakdrop_data:/var/lib/bakdrop
       - bakdrop_files:/fsr
-      - vendor:/var/www/html/vendor
     ports:
-      - "8080:80"
+      - "80:80"
+      - "443:443"
     restart: unless-stopped
 
 volumes:
