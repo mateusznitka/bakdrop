@@ -10,6 +10,10 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    environment:
+      - BASE_URL=https://your-domain-or-ip
+      - DEFAULT_LANG=en
+      - TZ=Europe/Warsaw
     restart: unless-stopped
 
 volumes:
