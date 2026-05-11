@@ -10,6 +10,8 @@ Bakdrop (backup drop) is designed for administrators who need to share files tem
 
 Main scenario is to share data restored from backups to end users by self-expiring link with option do auto-delete data after downloading.
 
+![Bakdrop](assets/diagram.png)
+
 ## Features
 
 - **Temporary share links** - Generate random links with optional expiration
