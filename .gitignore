@@ -7,10 +7,7 @@ node_modules/
 *.sql
 cleanup.php
 manage.php
-
+notes.md
 # dev-only files
 Dockerfile
 compose.yml
-
-# sensitive config - copy config.example.php to config.php and fill in values
-config.php
