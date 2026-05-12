@@ -1,5 +1,3 @@
-# Bakdrop
-
 ![Bakdrop](assets/logo.png)
 
 *Work in progress*
