@@ -131,6 +131,7 @@ sudo chown www-data:www-data /fsr               # or wherever FILES_PATH points
 #### 5. Initial setup
 
 Navigate to `http://your-domain-or-ip/setup.php` and create the first admin account.
+You can setup https like in every apache webapp.
 
 ## Usage
 
