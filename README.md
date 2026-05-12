@@ -4,35 +4,94 @@
 
 *Work in progress*
 
-Simple file sharing web app for temporary file distribution.
+Bakdrop is simple web app for sharing files from server to end users by creating a unique download links.
 
-Bakdrop (backup drop) is designed for administrators who need to share files temporarily with end users.
+![Bakdrop](assets/use-diagram.png)
 
-Main scenario is to share data restored from backups to end users by self-expiring link with option do auto-delete data after downloading.
+The main scenario is to share data restored from backups to end users by self-expiring link with option do auto-delete data after downloading.
 
 ![Bakdrop](assets/diagram.png)
+
+The whole idea of bakdrop is just simple sharing files from your host. No users, permissions, fancy options - just link with option to download.
 
 ## Features
 
 - **Temporary share links** - Generate random links with optional expiration
 - **Password protection** - Optionally protect links with passwords
-- **Auto-deletion** - Files can be automatically deleted after download
+- **Auto-deletion** - Files can be automatically deleted after download or after some time (cron needed - script TBD)
 - **Folder sharing** - Share entire folders (streamed as ZIP)
-- **Multi-language** - English and Polish UI
-- **Themes** - Dark and Light modes
-- **Efficient streaming** - Large file support with chunked streaming and Range requests
-- **Multi-user support** - Each user has their own isolated folder (but proper user management isn't completed yet)
+- **Efficient streaming** - Large file support with chunked streaming and range requests.
 
 ## Requirements
 
+There are two options to install bakdrop - docker or manual installation.
+
+### Docker
+- Docker + Docker Compose
+
+### Manual install
 - PHP 8.3+
-- SQLite3
-- Apache
+- SQLite3 extension for PHP
+- Apache with mod_rewrite
 - Composer (for ZipStream dependency)
 
 ## Installation
 
-This section is not completed yet, it's draft for now. Docker installation tbd
+### Option A — Docker
+
+#### 1. Clone the repository
+
+```bash
+git clone https://github.com/yourusername/bakdrop.git
+cd bakdrop
+```
+
+#### 2. Prepare the files directory on the host
+
+Bakdrop share files from a directory on the host machine (default: `/fsr` but you can setup whatever you want).
+
+The Docker container runs Apache as UID **33** (www-data inside a Debian container). Because bind mounts share the host filesystem, permissions are resolved by numeric UID/GID — not by name. UID 33 on the host may or may not have an associated username — that doesn't matter.
+
+**Run these commands on the host:**
+
+```bash
+sudo mkdir /fsr
+sudo chown 33:33 /fsr    # numeric UID:GID, matches www-data inside the container
+sudo chmod 770 /fsr      # owner (container) has full access; others have none
+```
+
+To write files to `/fsr` (e.g. when restoring a backup), use `sudo`:
+**If you want to write to `/fsr` without sudo:** create a group with GID 33 (if it's not exsiting) on the host and add yourself to it, then setup group write permission.
+
+#### 3. Edit compose.prod.yml
+
+Open `compose.prod.yml` and set your values:
+
+```yaml
+environment:
+  - BASE_URL=https://your-IP-or-domain   # used in generated share links
+  - DEFAULT_LANG=en                       # en or pl
+  - TZ=Europe/Warsaw
+volumes:
+  - bakdrop_data:/var/lib/bakdrop         # SQLite database (named volume, auto-created)
+  - /fsr:/fsr                             # change left /fsr to your data path on host if you want different
+```
+
+#### 4. Start the container
+
+```bash
+docker compose -f compose.prod.yml up -d
+```
+
+The container uses a **self-signed certificate** and listens on ports 80 (redirect) and 443 (HTTPS). Your browser will warn about the certificate — this is expected for internal/self-hosted use.
+
+#### 5. Initial setup
+
+Open `https://your-IP-or-domain/setup.php` in your browser and create the first admin account and follow instructions.
+
+---
+
+### Option B — Manual install (Apache)
 
 #### 1. Clone or download
 
@@ -41,50 +100,43 @@ git clone https://github.com/yourusername/bakdrop.git
 cd bakdrop
 ```
 
-Or extract the ZIP file to your web server directory.
-
 #### 2. Install dependencies
-
-The application requires ZipStream library for folder downloads. Install it using Composer:
 
 ```bash
 composer install
 ```
 
-**Note:** `composer.json` and `composer.lock` are included in the package. This will install:
-- `maennchen/zipstream-php` v3.2
-
+This installs `maennchen/zipstream-php` (required for folder downloads).
 
 #### 3. Configure
 
-Edit `config.example.php` and rename it to `config.php`:
+Open `config.php` and edit the values directly, or set environment variables:
 
-```php
-define('DB_PATH', '/var/lib/bakdrop/shares.db');    // Database path, it will be created there
-define('FILES_PATH', '/path-to-your-data-dir');      // Root directory for all files
-define('BASE_URL', 'https://your-domain-or-ip');    // Base URL for share links
-define('DEFAULT_LANG', 'en');                        // Default language for public pages (en, pl)
-date_default_timezone_set('Europe/Warsaw');          // Timezone is used for showing expiration time in share links
-```
+| Variable | Default | Description |
+|---|---|---|
+| `DB_PATH` | `/var/lib/bakdrop/shares.db` | SQLite database path |
+| `FILES_PATH` | `/fsr` | Root directory for all shared files |
+| `BASE_URL` | `https://your-domain-or-ip` | Base URL used in generated share links |
+| `DEFAULT_LANG` | `en` | Default language for public pages (`en`, `pl`) |
+| `TZ` | `Europe/Warsaw` | Timezone for expiration display |
 
 #### 4. Set permissions
 
-
-Ensure web server can write to database and root file directory
-```
-chown www-data:www-data /path/to-your.db
-chmod 755 .
+```bash
+sudo chown -R www-data:www-data /path/to/bakdrop
+sudo chown www-data:www-data /var/lib/bakdrop   # or wherever DB_PATH points
+sudo chown www-data:www-data /fsr               # or wherever FILES_PATH points
 ```
 
 #### 5. Initial setup
 
-Navigate to `https://yourserver.com/setup.php` in your browser and create your first admin account.
+Navigate to `http://your-domain-or-ip/setup.php` and create the first admin account.
 
 ## Usage
 
 ### For Administrators
 
-1. **Login** - Navigate to `http://yourserver.com/auth.php`
+1. **Login** - Navigate to `https://your-domain-or-ip/`
 2. **Browse files** - Navigate through your assigned folder
 3. **Create share link**:
    - Click "Share" next to any file or folder
@@ -96,23 +148,17 @@ Navigate to `https://yourserver.com/setup.php` in your browser and create your f
 
 ### For End Users
 
-End users receive a share link (e.g., `http://yourserver.com/share.php?h=abc123def456`):
+End users receive a share link (e.g., `http://your-domain-or-ip/share.php?h=abc123def456`):
 
 1. Click the link
 2. Enter password if required
 3. Download file or folder
 
-## File Streaming
+## FAQ
 
-### Small files (<100MB)
-- Streamed in 8MB chunks
-- Support for Range requests (resumable downloads)
-
-### Large files (>100MB)
-- X-Sendfile (Apache) or X-Accel-Redirect (Nginx) if available
-- Falls back to PHP streaming
-
-### Folders
-- On-the-fly ZIP creation using ZipStream
-- No temporary files created
-- Memory-efficient streaming
+1. Is it next Wetransfer / Nextcloud / Filebrowser? 
+ - No, it's simple as possible app just for sharing files without fancy features.
+2. Why there is no upload button in admin panel?
+ - Because app is designed only to share data that you have already on your host, or you will copy by scp, rsync, backup restore or whatever option. 
+3. What is the point of that app?
+ - App is designed for specific reason - I want to safely share data restored from backups with end users. Sometimes you don't have possibility to restore data directly to some hosts (eg. you don't have credentials, restore agents, network connection) so you have to restore files "somewhere" and share them "somehow". This app is anserw on this "somewhere" and "somehow". But I believe there are more use cases.
