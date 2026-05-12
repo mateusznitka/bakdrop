@@ -38,7 +38,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
     }
     
     try {
-        $hash = $db->createShare($path, $password, $expiry, $deleteAfter, $fileDeleteAt, getCurrentUserId());
+        $allowedPath = trim($user['allowed_path'], '/');
+        $dbPath = $allowedPath !== '' ? $allowedPath . '/' . ltrim($path, '/') : $path;
+
+        $hash = $db->createShare($dbPath, $password, $expiry, $deleteAfter, $fileDeleteAt, getCurrentUserId());
         $link = BASE_URL . '/share.php?h=' . $hash;
         
         echo json_encode([
@@ -140,11 +143,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
     
     try {
+        $allowedPath = trim($user['allowed_path'], '/');
+        $dbPath = $allowedPath !== '' ? $allowedPath . '/' . ltrim($path, '/') : $path;
+
         // Delete associated shares first
         $shares = $db->getAllShares();
         foreach ($shares as $share) {
-            // Check if this share points to the file/folder we're deleting
-            if ($share['file_path'] === $path || strpos($share['file_path'], $path . '/') === 0) {
+            if ($share['file_path'] === $dbPath || strpos($share['file_path'], $dbPath . '/') === 0) {
                 $db->deleteShare($share['hash']);
             }
         }

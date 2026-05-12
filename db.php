@@ -174,13 +174,26 @@ class Database {
         $stmt->execute();
     }
 
-    public function getAllShares() {
-        $result = $this->db->query('
-            SELECT s.*, u.username as created_by_name 
-            FROM shares s
-            LEFT JOIN users u ON s.created_by = u.id
-            ORDER BY s.created_at DESC
-        ');
+    public function getAllShares($pathFilter = null) {
+        if ($pathFilter !== null && $pathFilter !== '') {
+            $stmt = $this->db->prepare('
+                SELECT s.*, u.username as created_by_name
+                FROM shares s
+                LEFT JOIN users u ON s.created_by = u.id
+                WHERE s.file_path = :prefix OR s.file_path LIKE :prefix_sub
+                ORDER BY s.created_at DESC
+            ');
+            $stmt->bindValue(':prefix', $pathFilter, SQLITE3_TEXT);
+            $stmt->bindValue(':prefix_sub', $pathFilter . '/%', SQLITE3_TEXT);
+            $result = $stmt->execute();
+        } else {
+            $result = $this->db->query('
+                SELECT s.*, u.username as created_by_name
+                FROM shares s
+                LEFT JOIN users u ON s.created_by = u.id
+                ORDER BY s.created_at DESC
+            ');
+        }
         $shares = [];
         while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
             $shares[] = $row;

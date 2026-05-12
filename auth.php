@@ -26,6 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if ($db->verifyUser($username, $password)) {
         $user = $db->getUser($username);
+        session_regenerate_id(true);
         $_SESSION['admin_logged_in'] = true;
         $_SESSION['username'] = $username;
         $_SESSION['user_id'] = $user['id'];

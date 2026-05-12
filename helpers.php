@@ -1,5 +1,9 @@
 <?php
-session_start();
+session_start([
+    'cookie_httponly' => true,
+    'cookie_secure'   => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+    'cookie_samesite' => 'Strict',
+]);
 require_once 'config.php';
 
 // Load language file
@@ -88,9 +92,14 @@ function deleteDirectory($dir) {
 // Resolve wheter user path is in allowed path
 function resolveUserPath($allowedPath, $relativePath) {
     $basePath = rtrim(FILES_PATH . '/' . ltrim($allowedPath, '/'), '/');
+    $realBase = realpath($basePath);
     $fullPath = realpath($basePath . '/' . ltrim($relativePath, '/'));
 
-    if ($fullPath === false || strpos($fullPath, realpath($basePath)) !== 0) {
+    if ($fullPath === false || $realBase === false) {
+        return false;
+    }
+
+    if ($fullPath !== $realBase && strpos($fullPath, $realBase . '/') !== 0) {
         return false;
     }
 

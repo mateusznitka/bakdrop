@@ -38,9 +38,10 @@ if ($share['password'] && !isset($_SESSION['share_' . $hash])) {
 }
 
 $fullPath = realpath(FILES_PATH . '/' . $share['file_path']);
+$realFilesPath = realpath(FILES_PATH);
 
 // Security check
-if ($fullPath === false || strpos($fullPath, realpath(FILES_PATH)) !== 0) {
+if ($fullPath === false || $realFilesPath === false || ($fullPath !== $realFilesPath && strpos($fullPath, $realFilesPath . '/') !== 0)) {
     http_response_code(403);
     die(tr('access_denied'));
 }

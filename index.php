@@ -75,7 +75,8 @@ if ($fullPath === false) {
 }
 
 $items = scanDirectory($fullPath, $userBasePath);
-$shares = $db->getAllShares();
+$pathFilter = trim($user['allowed_path'], '/');
+$shares = $db->getAllShares($pathFilter !== '' ? $pathFilter : null);
 
 // Logout
 if (isset($_GET['logout'])) {
