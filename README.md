@@ -161,3 +161,7 @@ End users receive a share link (e.g., `http://your-domain-or-ip/share.php?h=abc1
  - Because app is designed only to share data that you have already on your host, or you will copy by scp, rsync, backup restore or whatever option. 
 3. What is the point of that app?
  - App is designed for specific reason - I want to safely share data restored from backups with end users. Sometimes you don't have possibility to restore data directly to some hosts (eg. you don't have credentials, restore agents, network connection) so you have to restore files "somewhere" and share them "somehow". This app is anserw on this "somewhere" and "somehow". But I believe there are more use cases.
+
+ ## Maintainer
+
+ Mateusz Nitka - [mtnt.pl](https://mtnt.pl/blog)
