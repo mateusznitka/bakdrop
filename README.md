@@ -6,9 +6,7 @@
 
 Bakdrop is simple web app for sharing files from server to end users by creating a unique download links.
 
-![Bakdrop](assets/use-diagram.png)
-
-The main scenario is to share data restored from backups to end users by self-expiring link with option do auto-delete data after downloading.
+The main scenario is to share data restored from backups to end users by self-expiring link with option do auto-delete data after downloading, but it can be used everywhere you need to share files from server.
 
 ![Bakdrop](assets/diagram.png)
 
@@ -134,6 +132,8 @@ Navigate to `http://your-domain-or-ip/setup.php` and create the first admin acco
 You can setup https like in every apache webapp.
 
 ## Usage
+
+![Bakdrop](assets/use-diagram.png)
 
 ### For Administrators
 
