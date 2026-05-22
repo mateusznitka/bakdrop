@@ -124,10 +124,10 @@
                             </td>
                             <td><?= $share['download_count'] ?></td>
                             <td>
-                                <button class="btn btn-small btn-primary" onclick="copyText('<?= BASE_URL ?>/share.php?h=<?= $share['hash'] ?>')">
+                                <button class="btn btn-small btn-primary" onclick="copyText('<?= BASE_URL ?>/share.php?h=<?= $share['hash'] ?>', this)">
                                     <?= t('copy_link') ?>
                                 </button>
-                                <button class="btn btn-small btn-primary" onclick="copyText('<?= BASE_URL ?>/download.php?h=<?= $share['hash'] ?>')">
+                                <button class="btn btn-small btn-primary" onclick="copyText('<?= BASE_URL ?>/download.php?h=<?= $share['hash'] ?>', this)">
                                     <?= t('copy_direct_link') ?>
                                 </button>
                                 <button class="btn btn-small btn-danger" onclick="deleteShare('<?= $share['hash'] ?>')">
@@ -221,7 +221,7 @@
                 <div class="link-with-copy" style="margin-bottom: 12px;">
                     <input type="text" id="generatedLink" readonly onclick="this.select()"
                            style="padding: 10px; font-family: monospace; font-size: 12px;">
-                    <button class="btn btn-primary btn-copy" onclick="copyToClipboard('generatedLink')">
+                    <button class="btn btn-primary btn-copy" onclick="copyToClipboard('generatedLink', this)">
                         <?= t('copy_link') ?>
                     </button>
                 </div>
@@ -229,7 +229,7 @@
                 <div class="link-with-copy" style="margin-bottom: 12px;">
                     <input type="text" id="generatedDirectLink" readonly onclick="this.select()"
                            style="padding: 10px; font-family: monospace; font-size: 12px;">
-                    <button class="btn btn-primary btn-copy" onclick="copyToClipboard('generatedDirectLink')">
+                    <button class="btn btn-primary btn-copy" onclick="copyToClipboard('generatedDirectLink', this)">
                         <?= t('copy_link') ?>
                     </button>
                 </div>
@@ -238,14 +238,14 @@
                     <div class="link-with-copy" style="margin-bottom: 6px;">
                         <input type="text" id="curlCommand" readonly onclick="this.select()"
                                style="padding: 10px; font-family: monospace; font-size: 12px;">
-                        <button class="btn btn-primary btn-copy" onclick="copyToClipboard('curlCommand')">
+                        <button class="btn btn-primary btn-copy" onclick="copyToClipboard('curlCommand', this)">
                             <?= t('copy_link') ?>
                         </button>
                     </div>
                     <div class="link-with-copy">
                         <input type="text" id="wgetCommand" readonly onclick="this.select()"
                                style="padding: 10px; font-family: monospace; font-size: 12px;">
-                        <button class="btn btn-primary btn-copy" onclick="copyToClipboard('wgetCommand')">
+                        <button class="btn btn-primary btn-copy" onclick="copyToClipboard('wgetCommand', this)">
                             <?= t('copy_link') ?>
                         </button>
                     </div>
@@ -419,15 +419,27 @@
             }
         });
         
-        // Universal copy function (silent, no alert)
-        function copyToClipboard(elementId) {
-            const input = document.getElementById(elementId);
-            input.select();
-            input.setSelectionRange(0, 99999); // For mobile
-            document.execCommand('copy');
+        function flashCopied(btn) {
+            btn.style.width = btn.offsetWidth + 'px';
+            const original = btn.textContent;
+            btn.textContent = '✓';
+            btn.disabled = true;
+            setTimeout(() => {
+                btn.textContent = original;
+                btn.disabled = false;
+                btn.style.width = '';
+            }, 1500);
         }
 
-        function copyText(text) {
+        function copyToClipboard(elementId, btn) {
+            const input = document.getElementById(elementId);
+            input.select();
+            input.setSelectionRange(0, 99999);
+            document.execCommand('copy');
+            if (btn) flashCopied(btn);
+        }
+
+        function copyText(text, btn) {
             navigator.clipboard.writeText(text).catch(() => {
                 const tmp = document.createElement('textarea');
                 tmp.value = text;
@@ -436,6 +448,7 @@
                 document.execCommand('copy');
                 document.body.removeChild(tmp);
             });
+            if (btn) flashCopied(btn);
         }
         
         async function deleteShare(hash) {
