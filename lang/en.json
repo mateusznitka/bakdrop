@@ -82,6 +82,12 @@
   "create_link": "Create Link",
   "link_created": "Link created!",
   "copy_link": "Copy Link",
+  "browser_link": "Browser link",
+  "direct_link": "Direct link (CLI)",
+  "cli_commands": "Terminal commands",
+  "copy_direct_link": "Copy Direct",
+  "yes": "Yes",
+  "no": "No",
   
   "current_password": "Current password",
   "new_password": "New password",

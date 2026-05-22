@@ -82,6 +82,12 @@
   "create_link": "Utwórz link",
   "link_created": "Link utworzony!",
   "copy_link": "Kopiuj link",
+  "browser_link": "Link do przeglądarki",
+  "direct_link": "Bezpośredni (CLI)",
+  "cli_commands": "Komendy terminala",
+  "copy_direct_link": "Kopiuj Direct",
+  "yes": "Tak",
+  "no": "Nie",
   
   "current_password": "Aktualne hasło",
   "new_password": "Nowe hasło",

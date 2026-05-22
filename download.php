@@ -33,8 +33,12 @@ if ($share['expires_at'] && $share['expires_at'] < time()) {
 
 // Check password
 if ($share['password'] && !isset($_SESSION['share_' . $hash])) {
-    http_response_code(403);
-    die(tr('password_required'));
+    $basicAuthPassword = $_SERVER['PHP_AUTH_PW'] ?? '';
+    if (!$basicAuthPassword || !password_verify($basicAuthPassword, $share['password'])) {
+        http_response_code(401);
+        header('WWW-Authenticate: Basic realm="Bakdrop"');
+        die(tr('password_required'));
+    }
 }
 
 $fullPath = realpath(FILES_PATH . '/' . $share['file_path']);

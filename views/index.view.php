@@ -106,7 +106,7 @@
                     <thead>
                         <tr>
                             <th><?= t('file') ?></th>
-                            <th><?= t('link') ?></th>
+                            <th><?= t('password') ?></th>
                             <th><?= t('created_by') ?></th>
                             <th><?= t('expires') ?></th>
                             <th><?= t('downloads') ?></th>
@@ -117,21 +117,19 @@
                         <?php foreach ($shares as $share): ?>
                         <tr>
                             <td><?= htmlspecialchars(basename($share['file_path'])) ?></td>
-                            <td>
-                                <div class="link-with-copy">
-                                    <input type="text" readonly value="<?= BASE_URL ?>/share.php?h=<?= $share['hash'] ?>" 
-                                           id="link-<?= $share['hash'] ?>" onclick="this.select()" style="font-family: monospace; font-size: 12px;">
-                                    <button class="btn btn-primary btn-copy" onclick="copyToClipboard('link-<?= $share['hash'] ?>')">
-                                        <?= t('copy_link') ?>
-                                    </button>
-                                </div>
-                            </td>
+                            <td><?= $share['password'] ? t('yes') : t('no') ?></td>
                             <td><?= htmlspecialchars($share['created_by_name'] ?? tr('deleted_user')) ?></td>
                             <td>
                                 <?= $share['expires_at'] ? date('Y-m-d H:i', $share['expires_at']) : t('never') ?>
                             </td>
                             <td><?= $share['download_count'] ?></td>
                             <td>
+                                <button class="btn btn-small btn-primary" onclick="copyText('<?= BASE_URL ?>/share.php?h=<?= $share['hash'] ?>')">
+                                    <?= t('copy_link') ?>
+                                </button>
+                                <button class="btn btn-small btn-primary" onclick="copyText('<?= BASE_URL ?>/download.php?h=<?= $share['hash'] ?>')">
+                                    <?= t('copy_direct_link') ?>
+                                </button>
                                 <button class="btn btn-small btn-danger" onclick="deleteShare('<?= $share['hash'] ?>')">
                                     <?= t('delete_link') ?>
                                 </button>
@@ -219,12 +217,38 @@
             
             <div id="shareResult" style="display: none; margin-top: 20px;">
                 <h3><?= t('link_created') ?></h3>
-                <div class="link-with-copy">
-                    <input type="text" id="generatedLink" readonly onclick="this.select()" 
-                           style="padding: 10px; font-family: monospace;">
+                <p style="margin: 0 0 4px; font-size: 12px; color: var(--text-secondary);"><?= t('browser_link') ?></p>
+                <div class="link-with-copy" style="margin-bottom: 12px;">
+                    <input type="text" id="generatedLink" readonly onclick="this.select()"
+                           style="padding: 10px; font-family: monospace; font-size: 12px;">
                     <button class="btn btn-primary btn-copy" onclick="copyToClipboard('generatedLink')">
                         <?= t('copy_link') ?>
                     </button>
+                </div>
+                <p style="margin: 0 0 4px; font-size: 12px; color: var(--text-secondary);"><?= t('direct_link') ?></p>
+                <div class="link-with-copy" style="margin-bottom: 12px;">
+                    <input type="text" id="generatedDirectLink" readonly onclick="this.select()"
+                           style="padding: 10px; font-family: monospace; font-size: 12px;">
+                    <button class="btn btn-primary btn-copy" onclick="copyToClipboard('generatedDirectLink')">
+                        <?= t('copy_link') ?>
+                    </button>
+                </div>
+                <div id="cliCommands" style="display: none;">
+                    <p style="margin: 0 0 4px; font-size: 12px; color: var(--text-secondary);"><?= t('cli_commands') ?></p>
+                    <div class="link-with-copy" style="margin-bottom: 6px;">
+                        <input type="text" id="curlCommand" readonly onclick="this.select()"
+                               style="padding: 10px; font-family: monospace; font-size: 12px;">
+                        <button class="btn btn-primary btn-copy" onclick="copyToClipboard('curlCommand')">
+                            <?= t('copy_link') ?>
+                        </button>
+                    </div>
+                    <div class="link-with-copy">
+                        <input type="text" id="wgetCommand" readonly onclick="this.select()"
+                               style="padding: 10px; font-family: monospace; font-size: 12px;">
+                        <button class="btn btn-primary btn-copy" onclick="copyToClipboard('wgetCommand')">
+                            <?= t('copy_link') ?>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -376,7 +400,19 @@
                 document.getElementById('shareForm').style.display = 'none';
                 document.getElementById('shareResult').style.display = 'block';
                 document.getElementById('generatedLink').value = result.link;
-                
+                document.getElementById('generatedDirectLink').value = result.direct_link;
+
+                if (result.has_password) {
+                    const pwd = document.getElementById('sharePassword').value;
+                    document.getElementById('cliCommands').style.display = 'block';
+                    document.getElementById('curlCommand').value = `curl -u ":${pwd}" -JO "${result.direct_link}"`;
+                    document.getElementById('wgetCommand').value = `wget --content-disposition --user="" --password="${pwd}" "${result.direct_link}"`;
+                } else {
+                    document.getElementById('cliCommands').style.display = 'block';
+                    document.getElementById('curlCommand').value = `curl -JO "${result.direct_link}"`;
+                    document.getElementById('wgetCommand').value = `wget --content-disposition "${result.direct_link}"`;
+                }
+
                 // Don't auto-close modal - user will close it manually or click outside
             } else {
                 alert(lang.error + ': ' + result.error);
@@ -389,7 +425,17 @@
             input.select();
             input.setSelectionRange(0, 99999); // For mobile
             document.execCommand('copy');
-            // No alert - silent copy
+        }
+
+        function copyText(text) {
+            navigator.clipboard.writeText(text).catch(() => {
+                const tmp = document.createElement('textarea');
+                tmp.value = text;
+                document.body.appendChild(tmp);
+                tmp.select();
+                document.execCommand('copy');
+                document.body.removeChild(tmp);
+            });
         }
         
         async function deleteShare(hash) {

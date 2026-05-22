@@ -43,11 +43,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
 
         $hash = $db->createShare($dbPath, $password, $expiry, $deleteAfter, $fileDeleteAt, getCurrentUserId());
         $link = BASE_URL . '/share.php?h=' . $hash;
-        
+        $directLink = BASE_URL . '/download.php?h=' . $hash;
+
         echo json_encode([
             'success' => true,
             'hash' => $hash,
-            'link' => $link
+            'link' => $link,
+            'direct_link' => $directLink,
+            'has_password' => !empty($password)
         ]);
     } catch (Exception $e) {
         echo json_encode(['success' => false, 'error' => $e->getMessage()]);
