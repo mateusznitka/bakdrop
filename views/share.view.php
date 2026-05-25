@@ -6,7 +6,7 @@
     <title>Bakdrop - <?= t('download_file') ?></title>
     <link rel="stylesheet" href="assets/style.css">
 </head>
-<body>
+<body data-theme="<?= DEFAULT_THEME ?>">
     <div class="container">
         <div class="download-box">
             <img src="assets/logo.png" alt="Bakdrop" style="height: 80px; margin: 0 auto 20px; display: block;">
