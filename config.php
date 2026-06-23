@@ -1,6 +1,6 @@
 <?php
 
-// System paths - EDIT IT
+// System paths - EDIT IT if you use manual installation.
 // confirm that www-data user has r/w privileges to your root and DB directory
 define('DB_PATH',      getenv('DB_PATH')      ?: '/var/lib/bakdrop/shares.db');
 define('FILES_PATH',   getenv('FILES_PATH')   ?: '/fsr');
