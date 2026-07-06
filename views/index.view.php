@@ -317,6 +317,14 @@
     
     <script>
         const lang = <?= json_encode($lang) ?>;
+        const csrfToken = '<?= csrfToken() ?>';
+
+        // POST to api.php with the CSRF token attached
+        async function apiPost(formData) {
+            formData.append('csrf_token', csrfToken);
+            const response = await fetch('api.php', { method: 'POST', body: formData });
+            return response.json();
+        }
 
         // Wire up buttons carrying user-controlled data (file names/paths) via
         // data-* attributes - never inline them into onclick JS: the browser
@@ -405,12 +413,7 @@
                 formData.append('delete_after', '1');
             }
             
-            const response = await fetch('api.php', {
-                method: 'POST',
-                body: formData
-            });
-            
-            const result = await response.json();
+            const result = await apiPost(formData);
             
             if (result.success) {
                 document.getElementById('shareForm').style.display = 'none';
@@ -476,12 +479,7 @@
             formData.append('action', 'delete');
             formData.append('hash', hash);
             
-            const response = await fetch('api.php', {
-                method: 'POST',
-                body: formData
-            });
-            
-            const result = await response.json();
+            const result = await apiPost(formData);
             
             if (result.success) {
                 location.reload(); // Reload to show updated list
@@ -503,12 +501,7 @@
             formData.append('path', path);
             formData.append('is_dir', isDir ? '1' : '0');
             
-            const response = await fetch('api.php', {
-                method: 'POST',
-                body: formData
-            });
-            
-            const result = await response.json();
+            const result = await apiPost(formData);
             
             if (result.success) {
                 location.reload(); // Reload to show updated file list
@@ -533,12 +526,7 @@
             formData.append('language', document.getElementById('prefLanguage').value);
             formData.append('theme', document.getElementById('prefTheme').value);
             
-            const response = await fetch('api.php', {
-                method: 'POST',
-                body: formData
-            });
-            
-            const result = await response.json();
+            const result = await apiPost(formData);
             
             if (result.success) {
                 location.reload();
@@ -572,12 +560,7 @@
             formData.append('current_password', document.getElementById('currentPassword').value);
             formData.append('new_password', newPassword);
             
-            const response = await fetch('api.php', {
-                method: 'POST',
-                body: formData
-            });
-            
-            const result = await response.json();
+            const result = await apiPost(formData);
             
             if (result.success) {
                 alert(lang.password_changed);

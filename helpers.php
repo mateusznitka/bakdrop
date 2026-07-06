@@ -56,6 +56,20 @@ function getCurrentUserId() {
     return $_SESSION['user_id'] ?? null;
 }
 
+// Get (create on first use) the per-session CSRF token
+function csrfToken() {
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+// Verify CSRF token from POST data
+function isValidCsrfToken() {
+    $token = $_POST['csrf_token'] ?? '';
+    return $token !== '' && hash_equals($_SESSION['csrf_token'] ?? '', $token);
+}
+
 // Format file size
 function formatBytes($bytes, $precision = 2) {
     $units = ['B', 'KB', 'MB', 'GB', 'TB'];

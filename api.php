@@ -14,6 +14,12 @@ requireLogin();
 
 header('Content-Type: application/json');
 
+// CSRF protection - every action here changes state, so all POSTs need a valid token
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isValidCsrfToken()) {
+    echo json_encode(['success' => false, 'error' => 'Invalid CSRF token']);
+    exit;
+}
+
 // Create new share
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
     $path = $_POST['path'] ?? '';
