@@ -61,7 +61,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
 // Delete share
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete') {
     $hash = $_POST['hash'] ?? '';
-    
+
+    $share = $db->getShare($hash);
+    if (!$share) {
+        echo json_encode(['success' => false, 'error' => 'Share not found']);
+        exit;
+    }
+
+    // Equal rights within a location: a share can only be deleted by users
+    // whose allowed_path covers the shared file (same prefix rule as getAllShares)
+    $user = $db->getUser(getCurrentUser());
+    $allowedPath = trim($user['allowed_path'], '/');
+    if ($allowedPath !== '' && $share['file_path'] !== $allowedPath && strpos($share['file_path'], $allowedPath . '/') !== 0) {
+        echo json_encode(['success' => false, 'error' => 'Access denied']);
+        exit;
+    }
+
     try {
         $db->deleteShare($hash);
         echo json_encode(['success' => true]);
