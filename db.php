@@ -202,8 +202,14 @@ class Database {
     }
 
     public function cleanup() {
-        // Delete expired shares
-        $this->db->exec('DELETE FROM shares WHERE expires_at IS NOT NULL AND expires_at < ' . time());
+        // Delete expired shares - except rows with a scheduled file deletion:
+        // the file_delete_at info must survive until cleanup.php removes the file
+        // (it deletes the share row afterwards)
+        $this->db->exec('
+            DELETE FROM shares
+            WHERE expires_at IS NOT NULL AND expires_at < ' . time() . '
+            AND file_delete_at IS NULL
+        ');
     }
     
     public function getFilesToDelete() {

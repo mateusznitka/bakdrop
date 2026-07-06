@@ -19,7 +19,10 @@ if (!$hash) {
     } else {
         // Check if expired
         if ($share['expires_at'] && $share['expires_at'] < time()) {
-            $db->deleteShare($hash);
+            // Keep the row if a file deletion is still scheduled - cleanup.php needs it
+            if (!$share['file_delete_at']) {
+                $db->deleteShare($hash);
+            }
             $error = $lang['link_expired'];
             $share = null;
         } else {
