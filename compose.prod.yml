@@ -1,6 +1,7 @@
 services:
   app:
     container_name: bakdrop
+    image: bakdrop
     build:
       context: .
       dockerfile: Dockerfile.prod
@@ -16,6 +17,23 @@ services:
     environment:
       - BASE_URL=https://10.10.50.253
       - DEFAULT_LANG=en
+      - TZ=Europe/Warsaw
+    restart: unless-stopped
+
+  # Runs cleanup.php every hour: deletes expired share links and files that
+  # reached their scheduled deletion time (file_delete_at).
+  # Same image and data volumes as app - only the process differs.
+  cleanup:
+    container_name: bakdrop-cleanup
+    image: bakdrop
+    depends_on:
+      - app
+    user: www-data
+    command: sh -c 'while true; do php /var/www/html/cleanup.php; sleep 3600; done'
+    volumes:
+      - bakdrop_data:/var/lib/bakdrop
+      - /fsr:/fsr
+    environment:
       - TZ=Europe/Warsaw
     restart: unless-stopped
 
