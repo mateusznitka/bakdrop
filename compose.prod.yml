@@ -4,6 +4,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.prod
+      args:
+        PUID: 33   # set to `id -u` of the host user who writes to the files directory
+        PGID: 33   # set to `id -g` of that user
     volumes:
       - bakdrop_data:/var/lib/bakdrop
       - /fsr:/fsr
