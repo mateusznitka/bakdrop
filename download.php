@@ -41,6 +41,10 @@ if ($share['password'] && !isset($_SESSION['share_' . $hash])) {
     }
 }
 
+// Release the session lock - otherwise every other request in the same
+// browser session (admin panel, second download) waits until this transfer ends
+session_write_close();
+
 $fullPath = realpath(FILES_PATH . '/' . $share['file_path']);
 $realFilesPath = realpath(FILES_PATH);
 
@@ -55,132 +59,132 @@ if (!file_exists($fullPath)) {
     die(tr('file_not_found'));
 }
 
-// Increment download counter
-$db->incrementDownload($hash);
+// Transfers can take hours - the default time limit would kill them mid-stream
+set_time_limit(0);
 
 $isDir = is_dir($fullPath);
+$completed = false; // full content delivered - only then delete_after_download may run
+
+// Header-safe filename (quotes/CR/LF would break the Content-Disposition header)
+$fileName = str_replace(['"', "\r", "\n"], '', basename($share['file_path']));
 
 if ($isDir) {
     // === FOLDER - ZIPSTREAM ===
-    // if object is a directory - use zipstream to zip it and download
-    
-    $zipName = basename($share['file_path']) . '.zip';
-    
-    // Send headers manually
+    // Generated on the fly, so size is unknown and resuming is not possible
+
+    $db->incrementDownload($hash);
+
+    $zipName = $fileName . '.zip';
+
     header('Content-Type: application/zip');
     header('Content-Disposition: attachment; filename="' . $zipName . '"');
     header('Cache-Control: no-cache, must-revalidate');
-    header('Pragma: no-cache');
-    
-    // Create ZipStream
+
+    // STORE instead of DEFLATE: backups are usually compressed already and
+    // deflate would burn CPU for the whole (possibly huge) transfer
     $zip = new \ZipStream\ZipStream(
         outputName: $zipName,
-        sendHttpHeaders: false  // Headers already sent
+        sendHttpHeaders: false,  // Headers already sent
+        defaultCompressionMethod: \ZipStream\CompressionMethod::STORE,
+        flushOutput: true,
     );
-    
+
     // Recursively add all files
     $iterator = new RecursiveIteratorIterator(
         new RecursiveDirectoryIterator($fullPath, RecursiveDirectoryIterator::SKIP_DOTS),
         RecursiveIteratorIterator::SELF_FIRST
     );
-    
+
     foreach ($iterator as $file) {
         $filePath = $file->getPathname();
         $relativePath = substr($filePath, strlen($fullPath) + 1);
-        
+
         if ($file->isFile()) {
             $zip->addFileFromPath($relativePath, $filePath);
         }
     }
-    
+
     $zip->finish();
-    
+
+    $completed = !connection_aborted();
+
 } else {
-    // === SINGLE FILE ===
-    
-    $fileName = basename($share['file_path']);
+    // === SINGLE FILE - PHP STREAMING with range support ===
+
     $fileSize = filesize($fullPath);
-    
-    // Check if X-Sendfile is available
-    $useXSendfile = false;
-    
-    if (function_exists('apache_get_modules')) {
-        $modules = apache_get_modules();
-        $useXSendfile = in_array('mod_xsendfile', $modules);
-    } elseif (isset($_SERVER['SERVER_SOFTWARE']) && stripos($_SERVER['SERVER_SOFTWARE'], 'nginx') !== false) {
-        $useXSendfile = true;
-    }
-    
-    if ($useXSendfile && $fileSize > 100 * 1024 * 1024) {
-        // === X-SENDFILE (Apache) or X-ACCEL-REDIRECT (Nginx) ===
-        if (function_exists('apache_get_modules')) {
-            header('Content-Type: application/octet-stream');
-            header('Content-Disposition: attachment; filename="' . $fileName . '"');
-            header('Content-Length: ' . $fileSize);
-            header('X-Sendfile: ' . $fullPath);
-        } else {
-            $internalPath = str_replace(realpath(FILES_PATH), '/internal-files', $fullPath);
-            header('Content-Type: application/octet-stream');
-            header('Content-Disposition: attachment; filename="' . $fileName . '"');
-            header('X-Accel-Redirect: ' . $internalPath);
-            header('X-Accel-Buffering: no');
-        }
-        
-    } else {
-        // === PHP STREAMING ===
-        
-        $mimeType = mime_content_type($fullPath);
-        
-        // Handle range requests
-        $start = 0;
-        $end = $fileSize - 1;
-        $length = $fileSize;
-        
-        if (isset($_SERVER['HTTP_RANGE'])) {
-            $range = $_SERVER['HTTP_RANGE'];
-            $range = str_replace('bytes=', '', $range);
-            $range = explode('-', $range);
-            $start = intval($range[0]);
-            $end = isset($range[1]) && $range[1] !== '' ? intval($range[1]) : $end;
-            $length = $end - $start + 1;
-            
+
+    $start = 0;
+    $end = $fileSize - 1;
+
+    if (isset($_SERVER['HTTP_RANGE'])) {
+        // Only a single "bytes=start-end" range is supported; malformed or
+        // multi-range headers are ignored and the full file is sent (RFC 9110 allows this)
+        if (preg_match('/^bytes=(\d*)-(\d*)$/', trim($_SERVER['HTTP_RANGE']), $m) && ($m[1] !== '' || $m[2] !== '')) {
+            if ($m[1] === '') {
+                // Suffix form "bytes=-N": last N bytes of the file
+                $suffix = (int)$m[2];
+                $start = max(0, $fileSize - $suffix);
+                if ($suffix === 0) {
+                    $start = $fileSize; // unsatisfiable, handled below
+                }
+            } else {
+                $start = (int)$m[1];
+                $end = ($m[2] === '') ? $fileSize - 1 : min((int)$m[2], $fileSize - 1);
+            }
+
+            if ($start > $end || $start >= $fileSize) {
+                http_response_code(416);
+                header('Content-Range: bytes */' . $fileSize);
+                exit;
+            }
+
             http_response_code(206);
             header('Content-Range: bytes ' . $start . '-' . $end . '/' . $fileSize);
         }
-        
-        header('Content-Type: ' . $mimeType);
-        header('Content-Length: ' . $length);
-        header('Content-Disposition: attachment; filename="' . $fileName . '"');
-        header('Accept-Ranges: bytes');
-        header('Cache-Control: no-cache, must-revalidate');
-        header('Pragma: no-cache');
-        
-        // Stream file in chunks
-        $fp = fopen($fullPath, 'rb');
-        fseek($fp, $start);
-        
-        $chunkSize = 8 * 1024 * 1024; // 8MB
-        $bytesLeft = $length;
-        
-        while ($bytesLeft > 0 && !feof($fp)) {
-            $read = min($chunkSize, $bytesLeft);
-            echo fread($fp, $read);
-            flush();
-            $bytesLeft -= $read;
-        }
-        
-        fclose($fp);
     }
+
+    $length = $end - $start + 1;
+
+    // Count once per download attempt - resumed range requests don't recount
+    if ($start === 0) {
+        $db->incrementDownload($hash);
+    }
+
+    header('Content-Type: application/octet-stream');
+    header('Content-Length: ' . $length);
+    header('Content-Disposition: attachment; filename="' . $fileName . '"');
+    header('Accept-Ranges: bytes');
+    header('Cache-Control: no-cache, must-revalidate');
+
+    // Stream file in chunks
+    $fp = fopen($fullPath, 'rb');
+    fseek($fp, $start);
+
+    $chunkSize = 8 * 1024 * 1024; // 8MB
+    $bytesLeft = $length;
+
+    while ($bytesLeft > 0 && !feof($fp) && !connection_aborted()) {
+        $read = min($chunkSize, $bytesLeft);
+        echo fread($fp, $read);
+        flush();
+        $bytesLeft -= $read;
+    }
+
+    fclose($fp);
+
+    // Complete only when the whole file went out in one response - a partial
+    // (range) response must never trigger auto-delete
+    $completed = ($start === 0 && $end === $fileSize - 1 && $bytesLeft <= 0 && !connection_aborted());
 }
 
 // Delete file/link if delete_after_download is enabled
-if ($share['delete_after_download']) {
+if ($share['delete_after_download'] && $completed) {
     if ($isDir) {
         deleteDirectory($fullPath);
     } else {
         unlink($fullPath);
     }
-    
+
     $db->deleteShare($hash);
 }
 
