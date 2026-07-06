@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="<?= $user['language'] ?>">
+<html lang="<?= htmlspecialchars($user['language']) ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -80,10 +80,10 @@
                             <td><?= $item['is_dir'] ? '-' : formatBytes($item['size']) ?></td>
                             <td><?= date('Y-m-d H:i', $item['modified']) ?></td>
                             <td>
-                                <button class="btn btn-small btn-primary" onclick="createShare('<?= htmlspecialchars($item['path'], ENT_QUOTES) ?>', <?= $item['is_dir'] ? 'true' : 'false' ?>)">
+                                <button class="btn btn-small btn-primary js-share" data-path="<?= htmlspecialchars($item['path'], ENT_QUOTES) ?>" data-is-dir="<?= $item['is_dir'] ? '1' : '0' ?>">
                                     <?= t('share') ?>
                                 </button>
-                                <button class="btn btn-small btn-danger" onclick="deleteFile('<?= htmlspecialchars($item['path'], ENT_QUOTES) ?>', <?= $item['is_dir'] ? 'true' : 'false' ?>, '<?= htmlspecialchars($item['name'], ENT_QUOTES) ?>')">
+                                <button class="btn btn-small btn-danger js-delete-file" data-path="<?= htmlspecialchars($item['path'], ENT_QUOTES) ?>" data-is-dir="<?= $item['is_dir'] ? '1' : '0' ?>" data-name="<?= htmlspecialchars($item['name'], ENT_QUOTES) ?>">
                                     <?= t('delete') ?>
                                 </button>
                             </td>
@@ -124,13 +124,13 @@
                             </td>
                             <td><?= $share['download_count'] ?></td>
                             <td>
-                                <button class="btn btn-small btn-primary" onclick="copyText('<?= BASE_URL ?>/share.php?h=<?= $share['hash'] ?>', this)">
+                                <button class="btn btn-small btn-primary js-copy" data-text="<?= htmlspecialchars(BASE_URL . '/share.php?h=' . $share['hash'], ENT_QUOTES) ?>">
                                     <?= t('copy_link') ?>
                                 </button>
-                                <button class="btn btn-small btn-primary" onclick="copyText('<?= BASE_URL ?>/download.php?h=<?= $share['hash'] ?>', this)">
+                                <button class="btn btn-small btn-primary js-copy" data-text="<?= htmlspecialchars(BASE_URL . '/download.php?h=' . $share['hash'], ENT_QUOTES) ?>">
                                     <?= t('copy_direct_link') ?>
                                 </button>
-                                <button class="btn btn-small btn-danger" onclick="deleteShare('<?= $share['hash'] ?>')">
+                                <button class="btn btn-small btn-danger js-delete-share" data-hash="<?= htmlspecialchars($share['hash'], ENT_QUOTES) ?>">
                                     <?= t('delete_link') ?>
                                 </button>
                             </td>
@@ -317,6 +317,22 @@
     
     <script>
         const lang = <?= json_encode($lang) ?>;
+
+        // Wire up buttons carrying user-controlled data (file names/paths) via
+        // data-* attributes - never inline them into onclick JS: the browser
+        // HTML-decodes attribute values before parsing, so escaping can't help there
+        document.querySelectorAll('.js-share').forEach(btn => {
+            btn.addEventListener('click', () => createShare(btn.dataset.path, btn.dataset.isDir === '1'));
+        });
+        document.querySelectorAll('.js-delete-file').forEach(btn => {
+            btn.addEventListener('click', () => deleteFile(btn.dataset.path, btn.dataset.isDir === '1', btn.dataset.name));
+        });
+        document.querySelectorAll('.js-copy').forEach(btn => {
+            btn.addEventListener('click', () => copyText(btn.dataset.text, btn));
+        });
+        document.querySelectorAll('.js-delete-share').forEach(btn => {
+            btn.addEventListener('click', () => deleteShare(btn.dataset.hash));
+        });
         
         // Toggle settings dropdown
         function toggleDropdown(event) {
