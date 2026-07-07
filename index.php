@@ -12,6 +12,13 @@ if (!$db->hasUsers()) {
 
 requireLogin();
 
+// Logout (POST + CSRF - a GET link could be triggered cross-origin)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['logout']) && isValidCsrfToken()) {
+    session_destroy();
+    header('Location: auth.php');
+    exit;
+}
+
 $db->cleanup(); // Remove expired shares
 
 // Get current user and load their language
@@ -77,13 +84,6 @@ if ($fullPath === false) {
 $items = scanDirectory($fullPath, $userBasePath);
 $pathFilter = trim($user['allowed_path'], '/');
 $shares = $db->getAllShares($pathFilter !== '' ? $pathFilter : null);
-
-// Logout
-if (isset($_GET['logout'])) {
-    session_destroy();
-    header('Location: auth.php');
-    exit;
-}
 
 // Load view
 require __DIR__ . '/views/index.view.php';

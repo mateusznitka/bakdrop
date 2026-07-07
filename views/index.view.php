@@ -25,7 +25,10 @@
                     </div>
                 </div>
                 
-                <a href="?logout=1" class="btn btn-secondary"><?= t('logout') ?></a>
+                <form method="POST" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="<?= csrfToken() ?>">
+                    <button type="submit" name="logout" value="1" class="btn btn-secondary"><?= t('logout') ?></button>
+                </form>
             </div>
         </div>
         
@@ -80,7 +83,7 @@
                             <td><?= $item['is_dir'] ? '-' : formatBytes($item['size']) ?></td>
                             <td><?= date('Y-m-d H:i', $item['modified']) ?></td>
                             <td>
-                                <button class="btn btn-small btn-primary js-share" data-path="<?= htmlspecialchars($item['path'], ENT_QUOTES) ?>" data-is-dir="<?= $item['is_dir'] ? '1' : '0' ?>">
+                                <button class="btn btn-small btn-primary js-share" data-path="<?= htmlspecialchars($item['path'], ENT_QUOTES) ?>">
                                     <?= t('share') ?>
                                 </button>
                                 <button class="btn btn-small btn-danger js-delete-file" data-path="<?= htmlspecialchars($item['path'], ENT_QUOTES) ?>" data-is-dir="<?= $item['is_dir'] ? '1' : '0' ?>" data-name="<?= htmlspecialchars($item['name'], ENT_QUOTES) ?>">
@@ -156,8 +159,7 @@
             
             <form id="shareForm">
                 <input type="hidden" id="sharePath" name="path">
-                <input type="hidden" id="shareIsDir" name="is_dir">
-                
+
                 <p><?= t('sharing_file') ?>: <strong id="shareFileName"></strong></p>
                 
                 <div class="form-group">
@@ -330,7 +332,7 @@
         // data-* attributes - never inline them into onclick JS: the browser
         // HTML-decodes attribute values before parsing, so escaping can't help there
         document.querySelectorAll('.js-share').forEach(btn => {
-            btn.addEventListener('click', () => createShare(btn.dataset.path, btn.dataset.isDir === '1'));
+            btn.addEventListener('click', () => createShare(btn.dataset.path));
         });
         document.querySelectorAll('.js-delete-file').forEach(btn => {
             btn.addEventListener('click', () => deleteFile(btn.dataset.path, btn.dataset.isDir === '1', btn.dataset.name));
@@ -357,9 +359,8 @@
             }
         });
         
-        function createShare(path, isDir) {
+        function createShare(path) {
             document.getElementById('sharePath').value = path;
-            document.getElementById('shareIsDir').value = isDir ? '1' : '0';
             document.getElementById('shareFileName').textContent = path.split('/').pop();
             document.getElementById('shareModal').style.display = 'block';
             document.getElementById('shareResult').style.display = 'none';
@@ -395,8 +396,7 @@
             
             const formData = new FormData();
             formData.append('path', document.getElementById('sharePath').value);
-            formData.append('is_dir', document.getElementById('shareIsDir').value);
-            
+
             if (document.getElementById('setExpiry').checked) {
                 formData.append('expiry', document.getElementById('expiryTime').value);
             }

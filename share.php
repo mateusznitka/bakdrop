@@ -26,9 +26,13 @@ if (!$hash) {
             $error = $lang['link_expired'];
             $share = null;
         } else {
-            // Check if file still exists
+            // Check if file still exists and stays within FILES_PATH
+            // (same guard as download.php - defense in depth)
             $fullPath = realpath(FILES_PATH . '/' . $share['file_path']);
-            if ($fullPath === false || !file_exists($fullPath)) {
+            $realFilesPath = realpath(FILES_PATH);
+            if ($fullPath === false || $realFilesPath === false
+                || ($fullPath !== $realFilesPath && strpos($fullPath, $realFilesPath . '/') !== 0)
+                || !file_exists($fullPath)) {
                 $error = $lang['file_not_found'];
                 $share = null;
             }

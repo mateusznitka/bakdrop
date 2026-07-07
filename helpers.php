@@ -6,6 +6,12 @@ session_start([
 ]);
 require_once 'config.php';
 
+// Baseline security headers for all web responses (no-op under CLI)
+if (PHP_SAPI !== 'cli') {
+    header('X-Content-Type-Options: nosniff');
+    header('X-Frame-Options: DENY');
+}
+
 // Load language file
 function loadLanguage($lang) {
     $file = __DIR__ . "/lang/$lang.json";

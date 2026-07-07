@@ -23,7 +23,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isValidCsrfToken()) {
 // Create new share
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
     $path = $_POST['path'] ?? '';
-    $isDir = isset($_POST['is_dir']) && $_POST['is_dir'] === '1';
     $password = $_POST['password'] ?? null;
     $expiry = isset($_POST['expiry']) ? (time() + intval($_POST['expiry'])) : null;
     $deleteAfter = isset($_POST['delete_after']) && $_POST['delete_after'] === '1';

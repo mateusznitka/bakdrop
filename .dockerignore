@@ -1,0 +1,10 @@
+.git
+.gitignore
+.dockerignore
+notes.md
+.env
+*.log
+.DS_Store
+node_modules
+# NOTE: cleanup.php and manage.php are intentionally kept in the image
+# (cleanup.php runs in the sidecar; manage.php is used via `docker exec`)
