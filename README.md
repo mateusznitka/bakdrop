@@ -148,11 +148,11 @@ Open `config.php` and edit the values directly, or set environment variables:
 
 | Variable | Default | Description |
 |---|---|---|
-| `DB_PATH` | `/var/lib/bakdrop/shares.db` | SQLite database path |
-| `FILES_PATH` | `/fsr` | Root directory for all shared files |
-| `BASE_URL` | `https://your-domain-or-ip` | Base URL used in generated share links |
-| `DEFAULT_LANG` | `en` | Default language for public pages (`en`, `pl`) |
-| `TZ` | `Europe/Warsaw` | Timezone for expiration display |
+| DB_PATH | `/var/lib/bakdrop/shares.db` | SQLite database path |
+| FILES_PATH | `/fsr` | Root directory for all shared files |
+| BASE_URL | `https://your-domain-or-ip` | Base URL used in generated share links |
+| DEFAULT_LANG | `en` | Default language for public pages (`en`, `pl`) |
+| TZ | `Europe/Warsaw` | Timezone for expiration display |
 
 #### 4. Set permissions
 
