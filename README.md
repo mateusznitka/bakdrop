@@ -12,6 +12,7 @@ The whole idea of bakdrop is just simple sharing files from your host. No users,
 
 More about project and workflow you can read on my blog:
 [MTNT Blog - ENG](https://mtnt.pl/blog/en/posts/bakdrop-sharing-backups/)
+
 [MTNT Blog - PL](https://mtnt.pl/blog/posts/bakdrop-udostepnianie-backupow/)
 
 ## Features

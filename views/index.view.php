@@ -22,6 +22,7 @@
                         </div>
                         <a href="#" onclick="openPreferencesModal(); return false;"><?= t('preferences') ?></a>
                         <a href="#" onclick="openPasswordModal(); return false;"><?= t('change_password') ?></a>
+                        <a href="#" onclick="openAboutModal(); return false;"><?= t('about') ?></a>
                     </div>
                 </div>
                 
@@ -316,7 +317,63 @@
             </form>
         </div>
     </div>
-    
+
+    <!-- Modal: About -->
+    <div id="aboutModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAboutModal()">&times;</span>
+            <h2><?= t('about') ?></h2>
+
+            <div class="about-hero">
+                <img src="assets/logo.png" alt="Bakdrop" class="about-app-logo">
+                <div class="about-hero-meta">
+                    <span class="about-version-badge">v<?= APP_VERSION ?></span>
+                    <span class="about-tagline"><?= t('about_tagline') ?></span>
+                </div>
+            </div>
+
+            <hr class="about-divider">
+
+            <div class="about-links">
+                <a href="https://github.com/mateusznitka/bakdrop" target="_blank" rel="noopener noreferrer">
+                    <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+                    <span><?= t('github') ?></span>
+                    <span class="about-chevron">›</span>
+                </a>
+                <a href="https://github.com/mateusznitka/bakdrop/issues" target="_blank" rel="noopener noreferrer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span><?= t('report_issue') ?></span>
+                    <span class="about-chevron">›</span>
+                </a>
+                <a href="https://mtnt.pl/" target="_blank" rel="noopener noreferrer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span><?= t('website') ?></span>
+                    <span class="about-chevron">›</span>
+                </a>
+                <a href="https://mtnt.pl/blog/" target="_blank" rel="noopener noreferrer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
+                    <span><?= t('blog') ?></span>
+                    <span class="about-chevron">›</span>
+                </a>
+                <a href="https://github.com/mateusznitka/bakdrop/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+                    <span><?= t('license') ?></span>
+                    <span class="about-chevron">›</span>
+                </a>
+            </div>
+
+            <hr class="about-divider">
+
+            <div class="about-footer">
+                <img src="assets/MTNT.png" alt="MTNT" class="about-author-logo">
+                <div class="about-footer-text">
+                    <div class="about-author"><?= t('author') ?>: <strong>Mateusz Nitka</strong></div>
+                    <div class="about-copyright">© <?= date('Y') ?> · <?= t('license') ?>: <?= APP_LICENSE ?></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const lang = <?= json_encode($lang) ?>;
         const csrfToken = '<?= csrfToken() ?>';
@@ -535,6 +592,14 @@
             }
         });
         
+        function openAboutModal() {
+            document.getElementById('aboutModal').style.display = 'block';
+        }
+
+        function closeAboutModal() {
+            document.getElementById('aboutModal').style.display = 'none';
+        }
+
         function openPasswordModal() {
             document.getElementById('passwordModal').style.display = 'block';
         }
@@ -575,7 +640,8 @@
             const shareModal = document.getElementById('shareModal');
             const passwordModal = document.getElementById('passwordModal');
             const preferencesModal = document.getElementById('preferencesModal');
-            
+            const aboutModal = document.getElementById('aboutModal');
+
             if (event.target == shareModal) {
                 closeModal();
             }
@@ -584,6 +650,9 @@
             }
             if (event.target == preferencesModal) {
                 closePreferencesModal();
+            }
+            if (event.target == aboutModal) {
+                closeAboutModal();
             }
         }
     </script>

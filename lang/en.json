@@ -118,5 +118,17 @@
   "password_required": "Password required",
   "access_denied": "Access denied",
   "file_not_found": "File does not exist",
-  "invalid_password": "Invalid password"
+  "invalid_password": "Invalid password",
+  "about": "About",
+  "source_code": "Source code",
+  "github": "GitHub",
+  "report_issue": "Report an issue",
+  "license": "License",
+  "website": "Author's website",
+  "blog": "Blog",
+  "about_tagline": "Simple file sharing from your server",
+  "information": "Information",
+  "version": "Version",
+  "author": "Author",
+  "star_cta": "Enjoying Bakdrop? Star it on GitHub"
 }

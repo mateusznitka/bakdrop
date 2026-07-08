@@ -118,5 +118,17 @@
   "password_required": "Wymagane hasło",
   "access_denied": "Dostęp zabroniony",
   "file_not_found": "Plik nie istnieje",
-  "invalid_password": "Nieprawidłowe hasło"
+  "invalid_password": "Nieprawidłowe hasło",
+  "about": "O aplikacji",
+  "source_code": "Kod źródłowy",
+  "github": "GitHub",
+  "report_issue": "Zgłoś problem",
+  "license": "Licencja",
+  "website": "Strona autora",
+  "blog": "Blog",
+  "about_tagline": "Proste udostępnianie plików z serwera",
+  "information": "Informacje",
+  "version": "Wersja",
+  "author": "Autor",
+  "star_cta": "Podoba Ci się? Zostaw gwiazdkę na GitHubie"
 }
