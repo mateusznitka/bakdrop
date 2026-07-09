@@ -181,11 +181,12 @@
                 <div class="form-group">
                     <label>
                         <input type="checkbox" id="setFileDelete" onchange="toggleFileDelete()">
-                        <?= t('auto_delete_file') ?>
+                        <?= t('set_file_delete') ?>
                     </label>
                     <div id="fileDeleteOptions" style="display: none; margin-left: 20px;">
-                        <label><?= t('delete_file_after') ?>:</label>
-                        <select id="fileDeleteTime" name="file_delete_after">
+                        <label><?= t('delete_file') ?>:</label>
+                        <select id="fileDeleteWhen" name="file_delete_when">
+                            <option value="download"><?= t('after_download') ?></option>
                             <option value="3600"><?= t('1_hour') ?></option>
                             <option value="86400"><?= t('24_hours') ?></option>
                             <option value="604800"><?= t('7_days') ?></option>
@@ -193,7 +194,7 @@
                         <small style="color: var(--text-secondary);"><?= t('file_delete_warning') ?></small>
                     </div>
                 </div>
-                
+
                 <div class="form-group">
                     <label>
                         <input type="checkbox" id="setPassword" onchange="togglePassword()">
@@ -204,14 +205,7 @@
                         <input type="text" id="sharePassword" name="password" placeholder="<?= tr('enter_password') ?>">
                     </div>
                 </div>
-                
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="deleteAfter" name="delete_after" value="1">
-                        <?= t('delete_after_download') ?>
-                    </label>
-                </div>
-                
+
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeModal()"><?= t('cancel') ?></button>
                     <button type="submit" class="btn btn-primary"><?= t('create_link') ?></button>
@@ -458,17 +452,18 @@
             }
             
             if (document.getElementById('setFileDelete').checked) {
-                formData.append('file_delete_after', document.getElementById('fileDeleteTime').value);
+                const when = document.getElementById('fileDeleteWhen').value;
+                if (when === 'download') {
+                    formData.append('delete_after', '1');
+                } else {
+                    formData.append('file_delete_after', when);
+                }
             }
-            
+
             if (document.getElementById('setPassword').checked) {
                 formData.append('password', document.getElementById('sharePassword').value);
             }
-            
-            if (document.getElementById('deleteAfter').checked) {
-                formData.append('delete_after', '1');
-            }
-            
+
             const result = await apiPost(formData);
             
             if (result.success) {
