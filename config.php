@@ -7,6 +7,7 @@ define('FILES_PATH',   getenv('FILES_PATH')   ?: '/bakdrop');
 define('BASE_URL',     getenv('BASE_URL')     ?: 'https://your-domain-or-ip');
 define('DEFAULT_LANG',  getenv('DEFAULT_LANG')  ?: 'en');
 define('DEFAULT_THEME', getenv('DEFAULT_THEME') ?: 'dark');
+define('AUDIT_LOG',    getenv('AUDIT_LOG')    ?: '/var/log/bakdrop/audit.log');
 date_default_timezone_set(getenv('TZ') ?: 'Europe/Warsaw');
 
 ?>

@@ -61,6 +61,43 @@ function getCurrentUser() {
     return $_SESSION['username'] ?? null;
 }
 
+// Escape a value for a logfmt line: strip control chars (prevents log
+// injection via crafted filenames), quote if it contains spaces/=/"
+function auditValue($v) {
+    $v = preg_replace('/[\x00-\x1F\x7F]/', ' ', (string)$v);
+    $v = trim($v);
+    if ($v === '') {
+        return '-';
+    }
+    if (preg_match('/[\s"=]/', $v)) {
+        return '"' . str_replace('"', '\\"', $v) . '"';
+    }
+    return $v;
+}
+
+// Append one audit event to the log in logfmt:
+//   2026-07-09T15:20:03+02:00 event=share_download actor=- ip=10.0.0.5 hash=abc file="x"
+// actor/ip default to the logged-in user and client IP; pass them in $fields to
+// override (e.g. CLI). Logging never breaks the app - failures are ignored.
+function audit($event, array $fields = []) {
+    $actor = array_key_exists('actor', $fields) ? $fields['actor'] : (getCurrentUser() ?? '-');
+    $ip    = array_key_exists('ip', $fields)    ? $fields['ip']    : ($_SERVER['REMOTE_ADDR'] ?? '-');
+    unset($fields['actor'], $fields['ip']);
+
+    $line = date('c')
+          . ' event=' . auditValue($event)
+          . ' actor=' . auditValue($actor)
+          . ' ip=' . auditValue($ip);
+    foreach ($fields as $key => $value) {
+        if ($value === null) {
+            continue;
+        }
+        $line .= ' ' . $key . '=' . auditValue($value);
+    }
+
+    @file_put_contents(AUDIT_LOG, $line . "\n", FILE_APPEND | LOCK_EX);
+}
+
 // Get current logged in user ID
 function getCurrentUserId() {
     return $_SESSION['user_id'] ?? null;

@@ -180,6 +180,9 @@ class Database {
         $stmt = $this->db->prepare('DELETE FROM shares WHERE hash = :hash');
         $stmt->bindValue(':hash', $hash, SQLITE3_TEXT);
         $stmt->execute();
+        // Report whether a row was actually removed. Catches a silently failing
+        // write (e.g. read-only database) instead of falsely claiming success.
+        return $this->db->changes() > 0;
     }
 
     public function getAllShares($pathFilter = null) {

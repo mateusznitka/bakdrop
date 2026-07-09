@@ -143,6 +143,7 @@ function createUser(Database $db): void {
 
     try {
         $db->createUser($username, $pw, $language, $theme, $path);
+        audit('user_create', ['actor' => 'cli', 'target' => $username, 'path' => $path !== '' ? $path : '/ (root)']);
         echo "\n✓ User '$username' created (path: " . ($path !== '' ? $path : '/ (root)') . ").\n";
     } catch (Exception $e) {
         echo "Error: " . $e->getMessage() . "\n";
@@ -164,6 +165,7 @@ function resetPassword(Database $db): void {
     }
 
     $db->changePassword($username, $pw);
+    audit('user_reset', ['actor' => 'cli', 'target' => $username]);
     echo "\n✓ Password updated for '$username'.\n";
 }
 
@@ -176,6 +178,7 @@ function changePath(Database $db): void {
     }
     $path = promptPath();
     if ($db->updatePath($username, $path)) {
+        audit('user_setpath', ['actor' => 'cli', 'target' => $username, 'path' => $path !== '' ? $path : '/ (root)']);
         echo "\n✓ Path updated for '$username': " . ($path !== '' ? $path : '/ (root)') . ".\n";
     } else {
         echo "Path unchanged.\n";
@@ -195,6 +198,7 @@ function deleteUser(Database $db): void {
     }
     // deleteUser() refuses to remove the last user and orphans their shares
     if ($db->deleteUser($username)) {
+        audit('user_delete', ['actor' => 'cli', 'target' => $username]);
         echo "\n✓ User '$username' deleted (their shares are kept, marked as 'Deleted user').\n";
     } else {
         echo "Could not delete user (cannot delete the last remaining user).\n";

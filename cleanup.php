@@ -74,6 +74,13 @@ if (empty($filesToDelete)) {
         // Delete share from database
         $db->deleteShare($share['hash']);
         echo "  Removed share link: {$share['hash']}\n";
+
+        audit('file_delete', [
+            'actor' => 'system',
+            'hash' => $share['hash'],
+            'file' => $share['file_path'],
+            'reason' => 'scheduled',
+        ]);
     }
     
     echo "\nSummary: $deletedCount deleted, $errorCount errors\n";

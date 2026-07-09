@@ -38,6 +38,9 @@ if ($share['expires_at'] && $share['expires_at'] < time()) {
 if ($share['password'] && !isset($_SESSION['share_' . $hash])) {
     $basicAuthPassword = $_SERVER['PHP_AUTH_PW'] ?? '';
     if (!$basicAuthPassword || !password_verify($basicAuthPassword, $share['password'])) {
+        if ($basicAuthPassword !== '') {
+            audit('share_pw', ['status' => 'fail', 'hash' => $hash]);
+        }
         http_response_code(401);
         header('WWW-Authenticate: Basic realm="Bakdrop"');
         die(tr('password_required'));
@@ -180,6 +183,13 @@ if ($isDir) {
     $completed = ($start === 0 && $end === $fileSize - 1 && $bytesLeft <= 0 && !connection_aborted());
 }
 
+$downloadStatus = $completed ? 'complete' : (connection_aborted() ? 'aborted' : 'partial');
+audit('share_download', [
+    'hash' => $hash,
+    'file' => $share['file_path'],
+    'status' => $downloadStatus,
+]);
+
 // Delete file/link if delete_after_download is enabled
 if ($share['delete_after_download'] && $completed) {
     if ($isDir) {
@@ -189,6 +199,12 @@ if ($share['delete_after_download'] && $completed) {
     }
 
     $db->deleteShare($hash);
+    audit('file_delete', [
+        'actor' => 'system',
+        'hash' => $hash,
+        'file' => $share['file_path'],
+        'reason' => 'after_download',
+    ]);
 }
 
 exit;

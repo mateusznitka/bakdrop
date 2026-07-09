@@ -30,11 +30,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['admin_logged_in'] = true;
         $_SESSION['username'] = $username;
         $_SESSION['user_id'] = $user['id'];
-        
+
+        audit('login', ['status' => 'ok', 'actor' => $username]);
+
         // Load user's language for future requests
         header('Location: index.php');
         exit;
     } else {
+        audit('login', ['status' => 'fail', 'actor' => $username]);
         $error = $lang['invalid_credentials'];
     }
 }

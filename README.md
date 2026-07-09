@@ -75,8 +75,10 @@ volumes:
   - /bakdrop:/bakdrop                    # your files directory on the host
 ```
 
-If you leave `PUID`/`PGID` at the default (33 = www-data), you'll need `sudo` to
-write into `/bakdrop`.
+If you leave `PUID`/`PGID` at the default (33 = www-data), you'll need `sudo` to write into `/bakdrop`.
+
+> [!NOTE]
+> You have to rebuild container and fix ownerships if you want to change PUID / PGID later. See notes below.
 
 **4. Start it:**
 
@@ -117,6 +119,7 @@ app, the database directory, and the files directory:
 ```bash
 sudo chown -R www-data:www-data /var/www/html/bakdrop
 sudo mkdir -p /var/lib/bakdrop && sudo chown www-data:www-data /var/lib/bakdrop
+sudo mkdir -p /var/log/bakdrop && sudo chown www-data:www-data /var/log/bakdrop
 sudo mkdir -p /bakdrop && sudo chown www-data:www-data /bakdrop
 ```
 
@@ -205,6 +208,17 @@ rsync, a backup restore, ...). Getting files onto the server is a separate job.
 > `request_terminate_timeout` in the FPM pool (keep it `0`) and proxy buffering
 > (`fastcgi_buffering off;` for `download.php`, or nginx may spool multi-GB
 > transfers to disk).
+
+
+
+> Because PUID/PGID are **build arguments**, changing them requires a rebuild:
+> `docker compose -f compose.prod.yml up -d --build`
+> **Note:** if you change `PUID`/`PGID` after the app already ran once, the
+> existing `bakdrop_data` and `bakdrop_logs` volumes still belong to the old
+> UID. Fix them once:
+>
+>     docker exec -u root bakdrop chown -R www-data:www-data /var/lib/bakdrop /var/log/bakdrop
+
 
 ## License
 

@@ -56,6 +56,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
         $link = BASE_URL . '/share.php?h=' . $hash;
         $directLink = BASE_URL . '/download.php?h=' . $hash;
 
+        audit('share_create', [
+            'hash' => $hash,
+            'file' => $dbPath,
+            'pw' => !empty($password) ? 'yes' : 'no',
+            'expires' => $expiry ? date('c', $expiry) : '-',
+            'del' => $deleteAfter ? 'after_download' : ($fileDeleteAt ? 'scheduled' : '-'),
+        ]);
+
         echo json_encode([
             'success' => true,
             'hash' => $hash,
@@ -88,12 +96,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         exit;
     }
 
-    try {
-        $db->deleteShare($hash);
-        echo json_encode(['success' => true]);
-    } catch (Exception $e) {
-        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    if (!$db->deleteShare($hash)) {
+        echo json_encode(['success' => false, 'error' => 'Failed to delete share']);
+        exit;
     }
+    audit('share_delete', ['hash' => $hash, 'file' => $share['file_path']]);
+    echo json_encode(['success' => true]);
     exit;
 }
 
@@ -116,6 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     
     try {
         $db->changePassword($username, $newPassword);
+        audit('password_change', ['status' => 'ok']);
         echo json_encode(['success' => true]);
     } catch (Exception $e) {
         echo json_encode(['success' => false, 'error' => $e->getMessage()]);
@@ -195,7 +204,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 exit;
             }
         }
-        
+
+        audit('file_delete', ['file' => $dbPath, 'reason' => 'manual']);
+
         echo json_encode(['success' => true]);
     } catch (Exception $e) {
         echo json_encode(['success' => false, 'error' => $e->getMessage()]);

@@ -50,6 +50,7 @@ if ($passwordRequired && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $passwordValid = true;
         $_SESSION['share_' . $hash] = true;
     } else {
+        audit('share_pw', ['status' => 'fail', 'hash' => $hash]);
         $error = $lang['invalid_password'];
     }
 }

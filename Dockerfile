@@ -9,7 +9,8 @@ RUN apt-get update && apt-get install -y git unzip libzip-dev \
     && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /var/lib/bakdrop && chown www-data:www-data /var/lib/bakdrop \
-    && mkdir -p /bakdrop && chown www-data:www-data /bakdrop
+    && mkdir -p /bakdrop && chown www-data:www-data /bakdrop \
+    && mkdir -p /var/log/bakdrop && chown www-data:www-data /var/log/bakdrop
 
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader
