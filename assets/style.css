@@ -267,10 +267,21 @@ body {
 .file-table td {
     padding: 12px;
     border-bottom: 1px solid var(--border-color);
+    overflow-wrap: anywhere; /* break long filenames instead of overflowing the table */
 }
 
 .file-table tbody tr:hover {
     background-color: var(--bg-secondary);
+}
+
+/* Actions column: keep buttons on one line on desktop; the table widens this
+   column to fit. Button margins give spacing - incl. vertical when they wrap. */
+.file-table td.actions-cell {
+    white-space: nowrap;
+}
+
+.actions-cell .btn {
+    margin: 0 6px 6px 0;
 }
 
 .file-table a {
@@ -587,6 +598,14 @@ body {
 }
 
 /* === Responsive === */
+/* Below this width the full shares table gets tight - let action buttons
+   wrap (stack) so the table never overflows its section */
+@media (max-width: 900px) {
+    .file-table td.actions-cell {
+        white-space: normal;
+    }
+}
+
 @media (max-width: 768px) {
     .container {
         padding: 10px;
@@ -610,6 +629,11 @@ body {
     .file-table th,
     .file-table td {
         padding: 8px;
+    }
+
+    /* Narrow screens: only Name/File + Actions fit - hide the rest */
+    .hide-mobile {
+        display: none;
     }
     
     .login-box,

@@ -15,7 +15,7 @@
             <div class="header-actions">
                 <!-- Settings dropdown -->
                 <div class="dropdown">
-                    <button class="btn btn-secondary" onclick="toggleDropdown(event)">⚙️ <?= t('settings') ?></button>
+                    <button class="btn btn-secondary" onclick="toggleDropdown(event)"><?= t('settings') ?></button>
                     <div class="dropdown-content" id="settingsDropdown">
                         <div class="user-info">
                             <strong><?= htmlspecialchars(getCurrentUser()) ?></strong>
@@ -56,8 +56,8 @@
                     <thead>
                         <tr>
                             <th><?= t('name') ?></th>
-                            <th><?= t('size') ?></th>
-                            <th><?= t('modified') ?></th>
+                            <th class="hide-mobile"><?= t('size') ?></th>
+                            <th class="hide-mobile"><?= t('modified') ?></th>
                             <th><?= t('actions') ?></th>
                         </tr>
                     </thead>
@@ -81,9 +81,9 @@
                                     📄 <?= htmlspecialchars($item['name']) ?>
                                 <?php endif; ?>
                             </td>
-                            <td><?= $item['is_dir'] ? '-' : formatBytes($item['size']) ?></td>
-                            <td><?= date('Y-m-d H:i', $item['modified']) ?></td>
-                            <td>
+                            <td class="hide-mobile"><?= $item['is_dir'] ? '-' : formatBytes($item['size']) ?></td>
+                            <td class="hide-mobile"><?= date('Y-m-d H:i', $item['modified']) ?></td>
+                            <td class="actions-cell">
                                 <button class="btn btn-small btn-primary js-share" data-path="<?= htmlspecialchars($item['path'], ENT_QUOTES) ?>">
                                     <?= t('share') ?>
                                 </button>
@@ -110,10 +110,10 @@
                     <thead>
                         <tr>
                             <th><?= t('file') ?></th>
-                            <th><?= t('password') ?></th>
-                            <th><?= t('created_by') ?></th>
-                            <th><?= t('expires') ?></th>
-                            <th><?= t('downloads') ?></th>
+                            <th class="hide-mobile"><?= t('password') ?></th>
+                            <th class="hide-mobile"><?= t('created_by') ?></th>
+                            <th class="hide-mobile"><?= t('expires') ?></th>
+                            <th class="hide-mobile"><?= t('downloads') ?></th>
                             <th><?= t('actions') ?></th>
                         </tr>
                     </thead>
@@ -121,13 +121,13 @@
                         <?php foreach ($shares as $share): ?>
                         <tr>
                             <td><?= htmlspecialchars(basename($share['file_path'])) ?></td>
-                            <td><?= $share['password'] ? t('yes') : t('no') ?></td>
-                            <td><?= htmlspecialchars($share['created_by_name'] ?? tr('deleted_user')) ?></td>
-                            <td>
+                            <td class="hide-mobile"><?= $share['password'] ? t('yes') : t('no') ?></td>
+                            <td class="hide-mobile"><?= htmlspecialchars($share['created_by_name'] ?? tr('deleted_user')) ?></td>
+                            <td class="hide-mobile">
                                 <?= $share['expires_at'] ? date('Y-m-d H:i', $share['expires_at']) : t('never') ?>
                             </td>
-                            <td><?= $share['download_count'] ?></td>
-                            <td>
+                            <td class="hide-mobile"><?= $share['download_count'] ?></td>
+                            <td class="actions-cell">
                                 <button class="btn btn-small btn-primary js-copy" data-text="<?= htmlspecialchars(BASE_URL . '/share.php?h=' . $share['hash'], ENT_QUOTES) ?>">
                                     <?= t('copy_link') ?>
                                 </button>
