@@ -27,7 +27,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
     $expiry = isset($_POST['expiry']) ? (time() + intval($_POST['expiry'])) : null;
     $deleteAfter = isset($_POST['delete_after']) && $_POST['delete_after'] === '1';
     $fileDeleteAt = isset($_POST['file_delete_after']) ? (time() + intval($_POST['file_delete_after'])) : null;
-    
+
+    // The link must not outlive the file: when the file is scheduled for
+    // deletion, cap the link expiry at (or set it to) that moment
+    if ($fileDeleteAt !== null) {
+        $expiry = ($expiry === null) ? $fileDeleteAt : min($expiry, $fileDeleteAt);
+    }
+
     // Get user's allowed path
     $user = $db->getUser(getCurrentUser());
     $fullPath = resolveUserPath($user['allowed_path'], $path);

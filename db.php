@@ -85,6 +85,14 @@ class Database {
         return $stmt->execute();
     }
 
+    public function updatePath($username, $allowedPath) {
+        $stmt = $this->db->prepare('UPDATE users SET allowed_path = :path WHERE username = :username');
+        $stmt->bindValue(':path', $allowedPath, SQLITE3_TEXT);
+        $stmt->bindValue(':username', $username, SQLITE3_TEXT);
+        $stmt->execute();
+        return $this->db->changes() > 0;
+    }
+
     public function getAllUsers() {
         $result = $this->db->query('SELECT id, username, language, theme, allowed_path, created_at FROM users ORDER BY username');
         $users = [];
