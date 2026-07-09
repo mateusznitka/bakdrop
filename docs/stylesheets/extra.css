@@ -1,6 +1,8 @@
-/* Header shows the Bakdrop wordmark logo only; hide the redundant site name text. */
+/* Header shows the Bakdrop wordmark logo only; hide the redundant site name text.
+   Use visibility (not display:none) so the title still occupies its flex space and
+   keeps pushing the search box and header buttons to the right. */
 .md-header__title {
-  display: none;
+  visibility: hidden;
 }
 
 /* Give the wide wordmark a bit more room in the header. */
