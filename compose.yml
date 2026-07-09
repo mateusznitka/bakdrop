@@ -9,7 +9,7 @@ services:
       - "8080:80"
     environment:
       - BASE_URL=http://10.10.50.253:8080
-      - FILES_PATH=/fsr
+      - FILES_PATH=/bakdrop
       - DEFAULT_LANG=pl
       - TZ=Europe/Warsaw
 

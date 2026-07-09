@@ -1,224 +1,215 @@
 ![Bakdrop](assets/logo.png)
 
-*Work in progress - BETA*
+Bakdrop is a simple web app for sharing files from a server with end users through unique, self-expiring download links.
 
-Bakdrop is simple web app for sharing files from server to end users by creating a unique download links.
+While it can be used in any case when you need to share files through web, it was built mainly for one specific job: sharing data restored from backups.
 
-The main scenario is to share data restored from backups to end users by self-expiring link with option do auto-delete data after downloading, but it can be used everywhere you need to share files from server.
+[Sometimes you can't restore straight to the target host](https://mtnt.pl/blog/en/posts/bakdrop-sharing-backups/) - you don't have agent, credentials or network access - so you need to restore the files *somewhere* and share them *somehow*. 
 
-![Bakdrop](assets/diagram.png)
+Bakdrop is that *somewhere and somehow*: you restore data here and share it with a link that can expire or require a password. The file can also be deleted automatically once the end user downloads it.
 
-The whole idea of bakdrop is just simple sharing files from your host. No users, permissions, fancy options - just link with option to download.
-
-More about project and workflow you can read on my blog:
-[MTNT Blog - ENG](https://mtnt.pl/blog/en/posts/bakdrop-sharing-backups/)
-
-[MTNT Blog - PL](https://mtnt.pl/blog/posts/bakdrop-udostepnianie-backupow/)
+![How it works](assets/diagram.png)
 
 ## Features
 
-- **Temporary share links** - Generate random links with optional expiration
-- **Password protection** - Optionally protect links with passwords
-- **Auto-deletion** - Files can be automatically deleted after download or at a scheduled time
-- **Folder sharing** - Share entire folders (streamed as ZIP)
-- **Efficient streaming** - Any file size, chunked streaming, pause/resume (HTTP range requests)
+- **Temporary links** - random, unguessable URLs with optional expiration.
+- **Password protection** - optional per-link password.
+- **Automatic cleanup** - delete the file after download, or after some time.
+- **Folder sharing** - folders are streamed on the fly as a ZIP.
+- **Large files** - TB-scale downloads with chunked streaming and resumable transfers.
 
-## Requirements
+## How it works
 
-There are two options to install bakdrop - docker or manual installation.
+1. An admin logs in, share a file or folder, and sends the link to the end user.
+2. The end user opens link and download the data. No accounts or permissions needed.
+3. File can be optionally deleted after download.
 
-### Docker
-- Docker + Docker Compose
-
-### Manual install
-- PHP 8.3+
-- SQLite3 extension for PHP
-- Apache with mod_php
-- Composer (for ZipStream dependency)
+There is no web upload feature by design: Bakdrop shares files that are already on the
+host, put there however you like (rsync, scp, a backup restore, ...).
 
 ## Installation
 
-### Option A — Docker
+You can run Bakdrop with Docker or as a plain Apache app. You can download package from here:
 
-#### 1. Clone the repository
+https://github.com/mateusznitka/bakdrop/releases
 
-```bash
-git clone https://github.com/yourusername/bakdrop.git
-cd bakdrop
-```
+> [!NOTE]
+> Use release files instead of cloning repo.
 
-#### 2. Prepare the files directory on the host
+### Option A - Docker
 
-Bakdrop shares files from a directory on the host machine (default: `/fsr`, but you can use any path).
-The container needs full access to it (read, create, delete), and you want to copy
-files into it **without sudo**. The cleanest way is to make the container run as *your* user.
+**Requirements:** Docker and Docker Compose.
 
-Bind mounts resolve permissions by **numeric UID/GID**, not by user name. By default
-the app inside the container runs as UID/GID 33 (www-data). You can change that at
-build time with the `PUID`/`PGID` build args so it matches your host user:
+**1. Download and extract** the latest release.
 
-**1. Find your IDs on the host:**
+**2. Prepare the files directory on the host.**
+
+Bakdrop serves files from a directory on the host (default `/bakdrop`). You'll want to
+copy files into it without sudo, so it's easiest to make the container run as
+your own user. Bind mounts match by numeric UID/GID, so check your user and group ID:
 
 ```bash
 id -u   # e.g. 1000
 id -g   # e.g. 1000
 ```
-
-**2. Create the directory, owned by you:**
-
+Then set directory permissions:
 ```bash
-sudo mkdir /fsr
-sudo chown user:group /fsr
-chmod 750 /fsr
+sudo mkdir /bakdrop
+sudo chown 1000:1000 /bakdrop
+chmod 750 /bakdrop
 ```
 
-**3. Put the same values into `compose.prod.yml`** (see next step).
-
-That's it. Everything you copy into /fsr is
-automatically fully accessible to Bakdrop.
-
-**Restoring backups as root (backup agents, e.g. Commvault):** if your restore tool
-runs as root and is set to preserve original owners/permissions/ACLs, some restored
-files may end up unreadable or undeletable for Bakdrop. Either disable
-"restore permissions/ACLs" in the tool, or normalize ownership after each restore:
-
-```bash
-sudo chown -R user:group /fsr/restored-folder
-```
-
-#### 3. Edit compose.prod.yml
-
-Open `compose.prod.yml` and set your values:
+**3. Edit `compose.prod.yml`** and set your values:
 
 ```yaml
-environment:
-  - BASE_URL=https://your-IP-or-domain   # used in generated share links
-  - DEFAULT_LANG=en                       # en or pl
-  - TZ=Europe/Warsaw
 build:
   args:
-    PUID: 1000                            # see step 2
-    PGID: 1000
+    PUID: 1000                           # your user ID from id -u
+    PGID: 1000                           # your group ID from id -g
+environment:
+  - BASE_URL=https://your-ip-or-domain   # used in generated links
+  - DEFAULT_LANG=en                      # en or pl
+  - TZ=Europe/Warsaw                     # timezone
 volumes:
-  - bakdrop_data:/var/lib/bakdrop         # SQLite database (named volume, auto-created)
-  - /fsr:/fsr                             # change left /fsr to your data path on host if you want different
+  - bakdrop_data:/var/lib/bakdrop        # database (named volume, auto-created)
+  - /bakdrop:/bakdrop                    # your files directory on the host
 ```
 
-#### 4. Start the containers
+If you leave `PUID`/`PGID` at the default (33 = www-data), you'll need `sudo` to
+write into `/bakdrop`.
+
+**4. Start it:**
 
 ```bash
-docker compose -f compose.prod.yml up -d
+docker compose -f compose.prod.yml up -d --build
 ```
 
-Compose starts two containers: `bakdrop` (the app) and `bakdrop-cleanup`, which
-every hour deletes expired share links and files past their scheduled deletion
-time. Check its activity with:
+This starts two containers: `bakdrop` (the app) and `bakdrop-cleanup` (an hourly
+job that removes expired links and deletes files scheduled for deletion). The app
+uses a self-signed certificate and listens on ports 80 (redirect) and 443
+(HTTPS) - your browser will warn about the certificate, which is expected for
+internal use. You can check the cleanup job with `docker logs bakdrop-cleanup`.
 
-```bash
-docker logs bakdrop-cleanup
-```
+**5. Create the first admin:** open `https://your-ip-or-domain/setup.php` and
+follow the prompts.
 
-The app uses a **self-signed certificate** and listens on ports 80 (redirect) and 443 (HTTPS). Your browser will warn about the certificate — this is expected for internal/self-hosted use. You can use your certificate ofc.
+### Option B — Manual (Apache)
 
-#### 5. Initial setup
+**Requirements:** PHP 8.3+ with the SQLite3 and mbstring extension, Apache with mod_php.
 
-Open https://your-IP-or-domain/setup.php in your browser and create the first admin account and follow instructions.
+**1. Download and extract** the latest release into your web root
+(e.g. `/var/www/html/bakdrop`).
 
----
+**2. Configure.** Edit `config.php`:
 
-### Option B — Manual install (Apache)
-
-#### 1. Clone or download
-
-```bash
-git clone https://github.com/yourusername/bakdrop.git
-cd bakdrop
-```
-
-#### 2. Install dependencies
-
-```bash
-composer install
-```
-
-This installs `maennchen/zipstream-php` (required for folder downloads).
-
-#### 3. Configure
-
-Open `config.php` and edit the values directly, or set environment variables:
-
-| Variable | Default | Description |
+| Setting | Default | Description |
 |---|---|---|
-| DB_PATH | `/var/lib/bakdrop/shares.db` | SQLite database path |
-| FILES_PATH | `/fsr` | Root directory for all shared files |
-| BASE_URL | `https://your-domain-or-ip` | Base URL used in generated share links |
-| DEFAULT_LANG | `en` | Default language for public pages (`en`, `pl`) |
-| TZ | `Europe/Warsaw` | Timezone for expiration display |
+| `DB_PATH` | `/var/lib/bakdrop/shares.db` | SQLite database file |
+| `FILES_PATH` | `/bakdrop` | Root directory for shared files |
+| `BASE_URL` | `https://your-domain-or-ip` | Base URL used in generated links |
+| `DEFAULT_LANG` | `en` | Default language (`en` / `pl`) |
+| `DEFAULT_THEME` | `dark` | Default theme (`dark` / `light`) |
+| `TZ` | `Europe/Warsaw` | Timezone |
 
-#### 4. Set permissions
+**3. Set permissions.** The web server user (`www-data`) needs read/write on the
+app, the database directory, and the files directory:
 
 ```bash
-sudo chown -R www-data:www-data /path/to/bakdrop
-sudo chown www-data:www-data /var/lib/bakdrop   # or wherever DB_PATH points
-sudo chown www-data:www-data /fsr               # or wherever FILES_PATH points
+sudo chown -R www-data:www-data /var/www/html/bakdrop
+sudo mkdir -p /var/lib/bakdrop && sudo chown www-data:www-data /var/lib/bakdrop
+sudo mkdir -p /bakdrop && sudo chown www-data:www-data /bakdrop
 ```
 
-#### 5. Set up automatic cleanup (cron)
-
-Bakdrop needs a periodic job to delete expired share links and files with
-a scheduled deletion time. Without it, the "auto-delete file" option never
-actually deletes anything. Add a cron entry for the web server user (it must
-be the same user that owns the files and the database — usually `www-data`):
+**4. Set up automatic cleanup.** Add an hourly cron job, running as the web server
+user so the database keeps consistent ownership:
 
 ```bash
 sudo crontab -u www-data -e
 ```
-
 ```
 0 * * * * php /var/www/html/bakdrop/cleanup.php >> /var/log/bakdrop-cleanup.log 2>&1
 ```
 
-Files are deleted on the next cleanup run after their scheduled time, so with
-an hourly cron a file can live up to 59 minutes past its deletion time. Run the
-cron more often (e.g. `*/5 * * * *`) if you need tighter timing.
+Without this, scheduled file deletion never happens. You can adjust cron check to your needs.
 
-#### 6. Initial setup
+**5. Create the first admin:** open `http://your-domain-or-ip/setup.php`. Set up
+HTTPS as you would for any Apache app.
 
-Navigate to `http://your-domain-or-ip/setup.php` and create the first admin account.
+## Managing admins
 
-## Usage
+The first admin is created through the web setup page. Everything after that -
+adding admins, resetting passwords, deleting accounts - is done from the command
+line with `manage.php`, an interactive menu. It's meant for a "super admin" with
+SSH access to the server.
 
-![Bakdrop](assets/use-diagram.png)
+Run it **as the web server user** (`www-data`) so the database keeps consistent
+ownership:
 
-### For Administrators
+```bash
+# Docker
+docker exec -it -u www-data bakdrop php manage.php
 
-1. **Login** - Navigate to `https://your-domain-or-ip/`
-2. **Browse files** - Navigate through your assigned folder
-3. **Create share link**:
-   - Click "Share" next to any file or folder
-   - Optionally set expiration (1h, 24h, 7 days)
-   - Optionally add password protection
-   - Optionally enable auto-delete after download
-4. **Copy link** - Share the generated link with end users
-5. **Manage shares** - View active shares, download counts, and delete links
+# Manual installation
+sudo -u www-data php manage.php
+```
 
-### For End Users
+You'll get a menu:
 
-End users receive a share link (e.g., `http://your-domain-or-ip/share.php?h=abc123def456`):
+```
+=== Bakdrop user management ===
+1. List users
+2. Create user
+3. Reset user password
+4. Change user path
+5. Delete user
+6. Exit
+```
 
-1. Click the link
-2. Enter password if required
-3. Download file or folder
+Type a number you want and follow the instructions.
+
+### The admin model
+
+Permissions are quite simple. Each admin is assigned a path within
+`FILES_PATH`:
+
+- An admin with an **empty path** sees all of `FILES_PATH` (the root).
+- An admin assigned e.g. `finance` only sees and shares `/bakdrop/finance`.
+- Two admins can be assigned the **same path** - they then have equal rights over
+  it (each sees the other's files and shares there).
+
+That's the whole model. Account management is
+only possible from the CLI, i.e. by whoever has SSH access to the server. Regular
+admins manage their own files and links through the web UI but cannot touch other
+accounts.
 
 ## FAQ
 
-1. Is it next Wetransfer / Nextcloud / Filebrowser? 
- - No, it's simple as possible app just for sharing files without fancy features.
-2. Why there is no upload button in admin panel?
- - Because app is designed only to share data that you have already on your host, or you will copy by scp, rsync, backup restore or whatever option. 
-3. What is the point of that app?
- - App is designed for specific reason - I want to safely share data restored from backups with end users. Sometimes you don't have possibility to restore data directly to some hosts (eg. you don't have credentials, restore agents, network connection) so you have to restore files "somewhere" and share them "somehow". This app is answer on this "somewhere" and "somehow". But I believe there are more use cases.
+**Is this a Nextcloud / WeTransfer / Filebrowser alternative?**
 
- ## Maintainer
+- No. It's intentionally minimal - sharing files by link, nothing more.
 
- Mateusz Nitka - [mtnt.pl](https://mtnt.pl/blog)
+**Why is there no upload button?**
+
+- Because Bakdrop shares files that are *already* on the host (copied there by scp,
+rsync, a backup restore, ...). Getting files onto the server is a separate job.
+
+## Notes
+
+> **Restoring backups as root (e.g. Commvault):** if your restore tool preserves
+> the original owners and permissions, some files may end up unreadable by
+> Bakdrop. Either disable "restore permissions/ACLs" in the tool, or normalize
+> ownership after a restore: `sudo chown -R $(id -u):$(id -g) /bakdrop/restored-folder`.
+
+> **Reverse proxy / PHP-FPM in manual installation:** Bakdrop targets Apache with mod_php. Behind nginx
+> or PHP-FPM, watch for limits that can cut off long downloads -
+> `request_terminate_timeout` in the FPM pool (keep it `0`) and proxy buffering
+> (`fastcgi_buffering off;` for `download.php`, or nginx may spool multi-GB
+> transfers to disk).
+
+## License
+
+GPL-3.0 - see [LICENSE](LICENSE).
+
+## Author
+
+Mateusz Nitka - [mtnt.pl](https://mtnt.pl/blog)
