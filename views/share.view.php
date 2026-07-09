@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bakdrop - <?= t('download_file') ?></title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body data-theme="<?= DEFAULT_THEME ?>">
