@@ -17,15 +17,22 @@ Bakdrop is that *somewhere and somehow*: you restore data here and share it with
 - **Automatic cleanup** - delete the file after download, or after some time.
 - **Folder sharing** - folders are streamed on the fly as a ZIP.
 - **Large files** - TB-scale downloads with chunked streaming and resumable transfers.
+- **Audit trail** - every action is recorded in audit logs.
 
 ## How it works
 
-1. An admin logs in, share a file or folder, and sends the link to the end user.
-2. The end user opens link and download the data. No accounts or permissions needed.
+1. An admin logs in, shares a file or folder, and sends the link to the end user.
+2. The end user opens the link and downloads the data. No accounts or permissions needed.
 3. File can be optionally deleted after download.
 
 There is no web upload feature by design: Bakdrop shares files that are already on the
 host, put there however you like (rsync, scp, a backup restore, ...).
+
+## Documentation
+
+You can find full documentation here:
+
+https://mateusznitka.github.io/bakdrop/
 
 ## Installation
 
@@ -35,6 +42,9 @@ https://github.com/mateusznitka/bakdrop/releases
 
 > [!NOTE]
 > Use release files instead of cloning repo.
+
+Per-distribution packages, TLS, log management, and troubleshooting are covered in
+the [full documentation](https://mateusznitka.github.io/bakdrop/).
 
 ### Option A - Docker
 
@@ -72,13 +82,11 @@ environment:
   - TZ=Europe/Warsaw                     # timezone
 volumes:
   - bakdrop_data:/var/lib/bakdrop        # database (named volume, auto-created)
+  - bakdrop_logs:/var/log/bakdrop        # audit log (named volume, auto-created)
   - /bakdrop:/bakdrop                    # your files directory on the host
 ```
 
 If you leave `PUID`/`PGID` at the default (33 = www-data), you'll need `sudo` to write into `/bakdrop`.
-
-> [!NOTE]
-> You have to rebuild container and fix ownerships if you want to change PUID / PGID later. See notes below.
 
 **4. Start it:**
 
@@ -90,12 +98,13 @@ This starts two containers: `bakdrop` (the app) and `bakdrop-cleanup` (an hourly
 job that removes expired links and deletes files scheduled for deletion). The app
 uses a self-signed certificate and listens on ports 80 (redirect) and 443
 (HTTPS) - your browser will warn about the certificate, which is expected for
-internal use. You can check the cleanup job with `docker logs bakdrop-cleanup`.
+internal use (to use your own certificate, see [TLS certificates](https://mateusznitka.github.io/bakdrop/tls/)).
+You can check the cleanup job with `docker logs bakdrop-cleanup`.
 
 **5. Create the first admin:** open `https://your-ip-or-domain/setup.php` and
 follow the prompts.
 
-### Option B — Manual (Apache)
+### Option B - Manual (Apache)
 
 **Requirements:** PHP 8.3+ with the SQLite3 and mbstring extension, Apache with mod_php.
 
@@ -130,60 +139,27 @@ user so the database keeps consistent ownership:
 sudo crontab -u www-data -e
 ```
 ```
-0 * * * * php /var/www/html/bakdrop/cleanup.php >> /var/log/bakdrop-cleanup.log 2>&1
+0 * * * * php /var/www/html/bakdrop/cleanup.php >> /var/log/bakdrop/cleanup.log 2>&1
 ```
 
 Without this, scheduled file deletion never happens. You can adjust cron check to your needs.
 
 **5. Create the first admin:** open `http://your-domain-or-ip/setup.php`. Set up
-HTTPS as you would for any Apache app.
+HTTPS as you would for any Apache app (see [TLS certificates](https://mateusznitka.github.io/bakdrop/tls/)).
 
 ## Managing admins
 
-The first admin is created through the web setup page. Everything after that -
-adding admins, resetting passwords, deleting accounts - is done from the command
-line with `manage.php`, an interactive menu. It's meant for a "super admin" with
-SSH access to the server.
-
-Run it **as the web server user** (`www-data`) so the database keeps consistent
-ownership:
+The first admin is created through the web setup page. Additional admins,
+password resets, and per-admin paths are managed from the CLI with `manage.php`:
 
 ```bash
-# Docker
-docker exec -it -u www-data bakdrop php manage.php
-
-# Manual installation
-sudo -u www-data php manage.php
+docker exec -it -u www-data bakdrop php manage.php   # Docker
+sudo -u www-data php manage.php                      # manual install
 ```
 
-You'll get a menu:
-
-```
-=== Bakdrop user management ===
-1. List users
-2. Create user
-3. Reset user password
-4. Change user path
-5. Delete user
-6. Exit
-```
-
-Type a number you want and follow the instructions.
-
-### The admin model
-
-Permissions are quite simple. Each admin is assigned a path within
-`FILES_PATH`:
-
-- An admin with an **empty path** sees all of `FILES_PATH` (the root).
-- An admin assigned e.g. `finance` only sees and shares `/bakdrop/finance`.
-- Two admins can be assigned the **same path** - they then have equal rights over
-  it (each sees the other's files and shares there).
-
-That's the whole model. Account management is
-only possible from the CLI, i.e. by whoever has SSH access to the server. Regular
-admins manage their own files and links through the web UI but cannot touch other
-accounts.
+It's an interactive menu, meant for a "super admin" with SSH access. See the
+[admin model](https://mateusznitka.github.io/bakdrop/users/) in the docs for how
+per-admin paths work.
 
 ## FAQ
 
@@ -195,30 +171,6 @@ accounts.
 
 - Because Bakdrop shares files that are *already* on the host (copied there by scp,
 rsync, a backup restore, ...). Getting files onto the server is a separate job.
-
-## Notes
-
-> **Restoring backups as root (e.g. Commvault):** if your restore tool preserves
-> the original owners and permissions, some files may end up unreadable by
-> Bakdrop. Either disable "restore permissions/ACLs" in the tool, or normalize
-> ownership after a restore: `sudo chown -R $(id -u):$(id -g) /bakdrop/restored-folder`.
-
-> **Reverse proxy / PHP-FPM in manual installation:** Bakdrop targets Apache with mod_php. Behind nginx
-> or PHP-FPM, watch for limits that can cut off long downloads -
-> `request_terminate_timeout` in the FPM pool (keep it `0`) and proxy buffering
-> (`fastcgi_buffering off;` for `download.php`, or nginx may spool multi-GB
-> transfers to disk).
-
-
-
-> Because PUID/PGID are **build arguments**, changing them requires a rebuild:
-> `docker compose -f compose.prod.yml up -d --build`
-> **Note:** if you change `PUID`/`PGID` after the app already ran once, the
-> existing `bakdrop_data` and `bakdrop_logs` volumes still belong to the old
-> UID. Fix them once:
->
->     docker exec -u root bakdrop chown -R www-data:www-data /var/lib/bakdrop /var/log/bakdrop
-
 
 ## License
 

@@ -27,6 +27,7 @@ theme:
         name: Switch to dark mode
   features:
     - navigation.instant
+    - navigation.indexes
     - navigation.tracking
     - navigation.top
     - toc.follow
@@ -38,6 +39,7 @@ nav:
   - Home: index.md
   - Requirements: requirements.md
   - Installation:
+      - installation.md
       - Docker: install-docker.md
       - Manual (Apache): install-manual.md
   - Configuration: configuration.md
