@@ -1,7 +1,11 @@
 .git
+.github
 .gitignore
 .dockerignore
 notes.md
+docs/
+mkdocs.yml
+site/
 .env
 *.log
 .DS_Store

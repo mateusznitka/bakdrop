@@ -6,6 +6,7 @@ node_modules/
 .docker/
 *.sql
 notes.md
+site/
 # dev-only files
 Dockerfile
 compose.yml
