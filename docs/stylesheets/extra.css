@@ -1,0 +1,10 @@
+/* Header shows the Bakdrop wordmark logo only; hide the redundant site name text. */
+.md-header__title {
+  display: none;
+}
+
+/* Give the wide wordmark a bit more room in the header. */
+.md-header__button.md-logo img {
+  height: 1.6rem;
+  width: auto;
+}
