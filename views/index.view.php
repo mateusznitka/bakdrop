@@ -328,7 +328,6 @@
                 <img src="assets/logo.png" alt="Bakdrop" class="about-app-logo">
                 <div class="about-hero-meta">
                     <span class="about-version-badge">v<?= APP_VERSION ?></span>
-                    <span class="about-tagline"><?= t('about_tagline') ?></span>
                 </div>
             </div>
 
