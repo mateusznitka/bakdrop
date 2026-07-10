@@ -4,8 +4,39 @@
 `/var/www/html/bakdrop`. Use the release package, not
 a git clone - the release ships with dependencies already bundled.
 
-**2. Configure.** Edit `config.php` (see
-[Configuration reference](../configuration.md) for every setting).
+**2. Configure.** Open `config.php`. Near the top you will see exactly these lines:
+
+```php
+define('DB_PATH',      getenv('DB_PATH')      ?: '/var/lib/bakdrop/shares.db');
+define('FILES_PATH',   getenv('FILES_PATH')   ?: '/bakdrop');
+define('BASE_URL',     getenv('BASE_URL')     ?: 'https://your-domain-or-ip');
+define('DEFAULT_LANG',  getenv('DEFAULT_LANG')  ?: 'en');
+define('DEFAULT_THEME', getenv('DEFAULT_THEME') ?: 'dark');
+define('AUDIT_LOG',    getenv('AUDIT_LOG')    ?: '/var/log/bakdrop/audit.log');
+```
+
+On the end of each line, there are values you can edit.
+
+**Example.** The `BASE_URL` line ships like this:
+
+```php
+define('BASE_URL',     getenv('BASE_URL')     ?: 'https://your-domain-or-ip');
+```
+
+To point Bakdrop at your real address, you change **only** the quoted string at the
+end, so the line becomes:
+
+```php
+define('BASE_URL',     getenv('BASE_URL')     ?: 'https://files.example.com');
+```
+
+**Which ones do I need to change?**
+
+- **`BASE_URL`** - **required**. It builds the download links; a wrong value means
+  wrong links.
+- **`FILES_PATH`** - change if you want to share files from different directory than default /bakdrop.
+- `DB_PATH`, `AUDIT_LOG`, `DEFAULT_LANG`, `DEFAULT_THEME`, `TZ` - optional, the
+  defaults are fine. See the [Configuration reference](../configuration.md).
 
 **3. Set permissions.** The web server user (`www-data`) needs read and write
 access on the app, the database directory, the log directory, and the files

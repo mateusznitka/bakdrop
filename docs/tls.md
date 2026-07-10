@@ -16,10 +16,10 @@ two fixed paths inside the container:
 To use your own certificate, mount your files over those two paths.
 
 **1. Put your certificate and key on the host**, for example in a `certs/` folder
-next to `compose.prod.yml`.
+next to `compose.yml`.
 
 **2. Mount them** by adding two lines to the app service's `volumes:` in
-`compose.prod.yml` (keep the existing volumes, just append the last two):
+`compose.yml` (keep the existing volumes, just append the last two):
 
 ```yaml
 volumes:
@@ -33,7 +33,7 @@ volumes:
 **3. Recreate the container** (note: no `--build`):
 
 ```bash
-docker compose -f compose.prod.yml up -d
+docker compose up -d
 ```
 
 Notes:

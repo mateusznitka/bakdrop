@@ -1,6 +1,6 @@
 # Configuration reference
 
-In Docker, set these through the `environment:` block in `compose.prod.yml`. In a
+In Docker, set these through the `environment:` block in `compose.yml`. In a
 manual installation, edit the `define(...)` values in `config.php` (or export the
 matching environment variables). Every setting reads an environment variable and
 falls back to the default shown below.

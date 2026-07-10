@@ -21,7 +21,7 @@ sudo chown 1000:1000 /bakdrop
 chmod 750 /bakdrop
 ```
 
-**3. Edit `compose.prod.yml`.** Set the build arguments and environment:
+**3. Edit `compose.yml`.** Set the build arguments and environment:
 
 ```yaml
 build:
@@ -44,7 +44,7 @@ at the default (33 = www-data), you will need `sudo` to write into `/bakdrop`.
 **4. Start it:**
 
 ```bash
-docker compose -f compose.prod.yml up -d --build
+docker compose up -d --build
 ```
 
 This starts two containers:

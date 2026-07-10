@@ -8,5 +8,5 @@ node_modules/
 notes.md
 site/
 # dev-only files
-Dockerfile
-compose.yml
+Dockerfile.dev
+compose.dev.yml

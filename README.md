@@ -26,7 +26,7 @@ Bakdrop is that *somewhere and somehow*: you restore data here and share it with
 3. File can be optionally deleted after download.
 
 There is no web upload feature by design: Bakdrop shares files that are already on the
-host, put there however you like (rsync, scp, a backup restore, ...).
+host, put them there however you like (rsync, scp, a restore by backup agent, ...).
 
 ## Documentation
 
@@ -34,95 +34,74 @@ You can find full documentation here:
 
 https://mateusznitka.github.io/bakdrop/
 
+## Requirements
+
+Bakdrop can be deployed as a Docker container or a classic Apache / PHP webapp.
+
+- Container: Docker & Docker Compose
+- Manual installation: Apache, PHP 8.3+ with sqlite3 and mbstring extensions.
+
 ## Installation
 
-You can run Bakdrop with Docker or as a plain Apache app. You can download package from here:
+You can find detailed installation instructions in [full documentation](https://mateusznitka.github.io/bakdrop/installation/).
+
+Download latest version from releases:
 
 https://github.com/mateusznitka/bakdrop/releases
+
+
 
 > [!NOTE]
 > Use release files instead of cloning repo.
 
-Per-distribution packages, TLS, log management, and troubleshooting are covered in
-the [full documentation](https://mateusznitka.github.io/bakdrop/).
-
 ### Option A - Docker
 
-**Requirements:** Docker and Docker Compose.
+1. Download and extract the latest release.
 
-**1. Download and extract** the latest release.
-
-**2. Prepare the files directory on the host.**
-
-Bakdrop serves files from a directory on the host (default `/bakdrop`). You'll want to
-copy files into it without sudo, so it's easiest to make the container run as
-your own user. Bind mounts match by numeric UID/GID, so check your user and group ID:
-
-```bash
-id -u   # e.g. 1000
-id -g   # e.g. 1000
-```
-Then set directory permissions:
+2. Prepare the files directory on the host. Set directory permissions:
 ```bash
 sudo mkdir /bakdrop
-sudo chown 1000:1000 /bakdrop
+sudo chown 1000:1000 /bakdrop   # use your user PUID/PGID
 chmod 750 /bakdrop
 ```
 
-**3. Edit `compose.prod.yml`** and set your values:
+3. Edit `compose.yml` and set your values:
 
 ```yaml
 build:
   args:
-    PUID: 1000                           # your user ID from id -u
-    PGID: 1000                           # your group ID from id -g
+    PUID: 1000                             # your user ID from id -u
+    PGID: 1000                             # your group ID from id -g
 environment:
-  - BASE_URL=https://your-ip-or-domain   # used in generated links
-  - DEFAULT_LANG=en                      # en or pl
-  - TZ=Europe/Warsaw                     # timezone
+  - BASE_URL=https://your-ip-or-domain     # used in generated links
 volumes:
-  - bakdrop_data:/var/lib/bakdrop        # database (named volume, auto-created)
-  - bakdrop_logs:/var/log/bakdrop        # audit log (named volume, auto-created)
-  - /bakdrop:/bakdrop                    # your files directory on the host
+  - bakdrop_data:/var/lib/bakdrop          # database (named volume, auto-created)
+  - bakdrop_logs:/var/log/bakdrop          # audit log (named volume, auto-created)
+  - /bakdrop:/bakdrop  # your files directory on the host
 ```
 
-If you leave `PUID`/`PGID` at the default (33 = www-data), you'll need `sudo` to write into `/bakdrop`.
-
-**4. Start it:**
+4. Start it:
 
 ```bash
-docker compose -f compose.prod.yml up -d --build
+docker compose up -d --build
 ```
 
-This starts two containers: `bakdrop` (the app) and `bakdrop-cleanup` (an hourly
-job that removes expired links and deletes files scheduled for deletion). The app
-uses a self-signed certificate and listens on ports 80 (redirect) and 443
-(HTTPS) - your browser will warn about the certificate, which is expected for
-internal use (to use your own certificate, see [TLS certificates](https://mateusznitka.github.io/bakdrop/tls/)).
-You can check the cleanup job with `docker logs bakdrop-cleanup`.
-
-**5. Create the first admin:** open `https://your-ip-or-domain/setup.php` and
+5. Create the first admin: open `https://your-ip-or-domain/setup.php` and
 follow the prompts.
 
 ### Option B - Manual (Apache)
 
-**Requirements:** PHP 8.3+ with the SQLite3 and mbstring extension, Apache with mod_php.
-
-**1. Download and extract** the latest release into your web root
+1. Download and extract the latest release into your web root
 (e.g. `/var/www/html/bakdrop`).
 
-**2. Configure.** Edit `config.php`:
+2. Configure: Open and edit `config.php`:
 
-| Setting | Default | Description |
-|---|---|---|
-| `DB_PATH` | `/var/lib/bakdrop/shares.db` | SQLite database file |
-| `FILES_PATH` | `/bakdrop` | Root directory for shared files |
-| `BASE_URL` | `https://your-domain-or-ip` | Base URL used in generated links |
-| `DEFAULT_LANG` | `en` | Default language (`en` / `pl`) |
-| `DEFAULT_THEME` | `dark` | Default theme (`dark` / `light`) |
-| `TZ` | `Europe/Warsaw` | Timezone |
+```php
+define('FILES_PATH',   getenv('FILES_PATH')   ?: '/your_data_directory_on_host');
+define('BASE_URL',     getenv('BASE_URL')     ?: 'https://your-domain-or-ip');
+```
 
-**3. Set permissions.** The web server user (`www-data`) needs read/write on the
+3. Set permissions. The web server user (`www-data`) needs read/write on the
 app, the database directory, and the files directory:
 
 ```bash
@@ -132,20 +111,10 @@ sudo mkdir -p /var/log/bakdrop && sudo chown www-data:www-data /var/log/bakdrop
 sudo mkdir -p /bakdrop && sudo chown www-data:www-data /bakdrop
 ```
 
-**4. Set up automatic cleanup.** Add an hourly cron job, running as the web server
-user so the database keeps consistent ownership:
+4. Set up [automatic cleanup](https://mateusznitka.github.io/bakdrop/cleanup/).
 
-```bash
-sudo crontab -u www-data -e
-```
-```
-0 * * * * php /var/www/html/bakdrop/cleanup.php >> /var/log/bakdrop/cleanup.log 2>&1
-```
 
-Without this, scheduled file deletion never happens. You can adjust cron check to your needs.
-
-**5. Create the first admin:** open `http://your-domain-or-ip/setup.php`. Set up
-HTTPS as you would for any Apache app (see [TLS certificates](https://mateusznitka.github.io/bakdrop/tls/)).
+5. Create the first admin: open `http://your-domain-or-ip/setup.php`.
 
 ## Managing admins
 
@@ -163,9 +132,9 @@ per-admin paths work.
 
 ## FAQ
 
-**Is this a Nextcloud / WeTransfer / Filebrowser alternative?**
+**Is this a Nextcloud / PicoShare / Filebrowser alternative?**
 
-- No. It's intentionally minimal - sharing files by link, nothing more.
+- These are great pieces of software but no. It's built for different use-cases and it's intentionally minimal.
 
 **Why is there no upload button?**
 

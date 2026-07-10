@@ -6,6 +6,8 @@ notes.md
 docs/
 mkdocs.yml
 site/
+Dockerfile*
+compose*.yml
 .env
 *.log
 .DS_Store

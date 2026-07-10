@@ -24,7 +24,7 @@ Fix (manual): make sure `/var/lib/bakdrop` and the database file are owned by
 plain `docker compose up -d` will not pick up a change. Rebuild:
 
 ```bash
-docker compose -f compose.prod.yml up -d --build
+docker compose up -d --build
 ```
 
 And if the app already ran once, also run the `chown` from the previous item -

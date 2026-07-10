@@ -1,17 +1,44 @@
 services:
   app:
     container_name: bakdrop
-    build: .
+    image: bakdrop
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PUID: 1000   # set to `id -u` of the host user who writes to the files directory
+        PGID: 1000   # set to `id -g` of that user
     volumes:
-      - .:/var/www/html
-      - vendor:/var/www/html/vendor
+      - bakdrop_data:/var/lib/bakdrop
+      - bakdrop_logs:/var/log/bakdrop
+      - /bakdrop:/bakdrop
     ports:
-      - "8080:80"
+      - "80:80"
+      - "443:443"
     environment:
-      - BASE_URL=http://10.10.50.253:8080
-      - FILES_PATH=/bakdrop
-      - DEFAULT_LANG=pl
+      - BASE_URL=https://your-domain-or-ip
+      - DEFAULT_LANG=en
       - TZ=Europe/Warsaw
+    restart: unless-stopped
+
+  # Runs cleanup.php every hour: deletes expired share links and files that
+  # reached their scheduled deletion time (file_delete_at).
+  # Same image and data volumes as app - only the process differs.
+  cleanup:
+    container_name: bakdrop-cleanup
+    image: bakdrop
+    depends_on:
+      - app
+    user: www-data
+    command: sh -c 'while true; do php /var/www/html/cleanup.php; sleep 3600; done'
+    volumes:
+      - bakdrop_data:/var/lib/bakdrop
+      - bakdrop_logs:/var/log/bakdrop
+      - /bakdrop:/bakdrop
+    environment:
+      - TZ=Europe/Warsaw
+    restart: unless-stopped
 
 volumes:
-  vendor:
+  bakdrop_data:
+  bakdrop_logs:

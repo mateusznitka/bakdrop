@@ -7,7 +7,7 @@ session_start([
 require_once 'config.php';
 
 // App metadata shown in the About dialog (bump APP_VERSION on releases)
-define('APP_VERSION', '0.1.0');
+define('APP_VERSION', '1.0.0');
 define('APP_LICENSE', 'GPL-3.0');
 
 // Baseline security headers for all web responses (no-op under CLI)
@@ -61,8 +61,7 @@ function getCurrentUser() {
     return $_SESSION['username'] ?? null;
 }
 
-// Escape a value for a logfmt line: strip control chars (prevents log
-// injection via crafted filenames), quote if it contains spaces/=/"
+// Prevent log injection
 function auditValue($v) {
     $v = preg_replace('/[\x00-\x1F\x7F]/', ' ', (string)$v);
     $v = trim($v);
@@ -75,10 +74,7 @@ function auditValue($v) {
     return $v;
 }
 
-// Append one audit event to the log in logfmt:
-//   2026-07-09T15:20:03+02:00 event=share_download actor=- ip=10.0.0.5 hash=abc file="x"
-// actor/ip default to the logged-in user and client IP; pass them in $fields to
-// override (e.g. CLI). Logging never breaks the app - failures are ignored.
+// Append one audit event to the log
 function audit($event, array $fields = []) {
     $actor = array_key_exists('actor', $fields) ? $fields['actor'] : (getCurrentUser() ?? '-');
     $ip    = array_key_exists('ip', $fields)    ? $fields['ip']    : ($_SERVER['REMOTE_ADDR'] ?? '-');
