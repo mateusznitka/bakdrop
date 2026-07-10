@@ -1,4 +1,6 @@
-# Bakdrop
+<p style="text-align: center">
+  <img src="assets/logo.png" alt="Bakdrop" style="max-width: 420px; width: 100%">
+</p>
 
 Bakdrop is a small, self-hosted web app for sharing files that already sit on a
 server through unique, self-expiring download links. This site is the full
@@ -22,8 +24,9 @@ end clicks it and downloads. That is the whole product.
 
 The app was built for one recurring situation: sharing data restored from backups.
 
-When you restore from a backup, you often cannot restore straight to the machine
-that needs the data. You may not have an agent on it, or credentials, or network
+When you restore from a backup, [you often cannot restore straight to the machine
+that needs the data](https://mtnt.pl/blog/en/posts/bakdrop-sharing-backups/). You
+may not have an agent on it, or credentials, or network
 access to it. So you restore the files *somewhere* you do control, and then you
 still have to get them to the person or system that asked for them. Email
 attachments are too small, a shared network drive may not reach them, and standing
@@ -47,7 +50,7 @@ is done, nothing lingers.
 - **Ad hoc internal sharing.** Any time a file is already on a server and you just
   need to get it to a browser, without reaching for a heavier tool.
 
-## How you use it, day to day
+## How you use it
 
 1. **Put the file on the host.** Bakdrop shares what is already in its files
    directory (`/bakdrop` by default). Get files there however you like: a backup

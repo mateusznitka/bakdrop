@@ -69,3 +69,15 @@ plugins:
 
 extra_css:
   - stylesheets/extra.css
+
+extra:
+  social:
+    - icon: fontawesome/solid/globe
+      link: https://mtnt.pl/en/
+      name: mtnt.pl
+    - icon: fontawesome/solid/rss
+      link: https://mtnt.pl/blog/en/
+      name: Blog
+    - icon: fontawesome/brands/github
+      link: https://github.com/mateusznitka/bakdrop
+      name: GitHub
