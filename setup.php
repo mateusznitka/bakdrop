@@ -5,10 +5,7 @@ require_once 'db.php';
 $db = new Database();
 
 // Check if setup already completed
-$result = $db->db->query('SELECT COUNT(*) as count FROM users');
-$row = $result->fetchArray(SQLITE3_ASSOC);
-
-if ($row['count'] > 0) {
+if ($db->hasUsers()) {
     $lang = loadLanguage(DEFAULT_LANG);
     die(t('setup_complete') . ' <a href="auth.php">' . t('setup_login_link') . '</a>.');
 }

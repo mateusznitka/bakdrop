@@ -166,7 +166,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $isDir = isset($_POST['is_dir']) && $_POST['is_dir'] === '1';
     
     // Get user's allowed path
-    // Get user's allowed path
     $user = $db->getUser(getCurrentUser());
     $fullPath = resolveUserPath($user['allowed_path'], $path);
     
@@ -215,4 +214,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 }
 
 echo json_encode(['success' => false, 'error' => 'Invalid request']);
-?>

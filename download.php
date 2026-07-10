@@ -51,16 +51,8 @@ if ($share['password'] && !isset($_SESSION['share_' . $hash])) {
 // browser session (admin panel, second download) waits until this transfer ends
 session_write_close();
 
-$fullPath = realpath(FILES_PATH . '/' . $share['file_path']);
-$realFilesPath = realpath(FILES_PATH);
-
-// Security check
-if ($fullPath === false || $realFilesPath === false || ($fullPath !== $realFilesPath && strpos($fullPath, $realFilesPath . '/') !== 0)) {
-    http_response_code(403);
-    die(tr('access_denied'));
-}
-
-if (!file_exists($fullPath)) {
+$fullPath = resolveWithinFiles($share['file_path']);
+if ($fullPath === false) {
     http_response_code(404);
     die(tr('file_not_found'));
 }

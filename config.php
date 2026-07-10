@@ -9,5 +9,3 @@ define('DEFAULT_LANG',  getenv('DEFAULT_LANG')  ?: 'en');
 define('DEFAULT_THEME', getenv('DEFAULT_THEME') ?: 'dark');
 define('AUDIT_LOG',    getenv('AUDIT_LOG')    ?: '/var/log/bakdrop/audit.log');
 date_default_timezone_set(getenv('TZ') ?: 'Europe/Warsaw');
-
-?>

@@ -241,4 +241,3 @@ class Database {
         return $this->db->querySingle('SELECT COUNT(*) FROM users') > 0;
     }
 }
-?>

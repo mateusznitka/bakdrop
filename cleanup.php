@@ -6,7 +6,7 @@
  * Deletes expired shares and files that reached file_delete_at timestamp
  * 
  * Run via cron:
- *   0 * * * * php /path/to/bakdrop/cleanup.php >> /var/log/bakdrop-cleanup.log 2>&1
+ *   0 * * * * php /path/to/bakdrop/cleanup.php >> /var/log/bakdrop/cleanup.log 2>&1
  * 
  * Or manually:
  *   php cleanup.php
@@ -16,7 +16,7 @@ require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/db.php';
 
 // Check if running from CLI
-if (php_sapi_name() !== 'cli' && php_sapi_name() !== 'cgi-fcgi') {
+if (php_sapi_name() !== 'cli') {
     die('This script must be run from command line');
 }
 
@@ -38,39 +38,43 @@ if (empty($filesToDelete)) {
     $errorCount = 0;
     
     foreach ($filesToDelete as $share) {
-        $fullPath = realpath(FILES_PATH . '/' . $share['file_path']);
-        
-        // Security check
-        if ($fullPath === false || strpos($fullPath, realpath(FILES_PATH)) !== 0) {
+        // File already gone (deleted out of band or after download): drop the
+        // stale share row and move on - nothing to delete, not a security issue
+        $fullPath = resolveWithinFiles($share['file_path']);
+        if ($fullPath === false && realpath(FILES_PATH . '/' . $share['file_path']) === false) {
+            $db->deleteShare($share['hash']);
+            echo "- File already deleted: {$share['file_path']}\n";
+            continue;
+        }
+
+        // resolveWithinFiles returned false but the path exists -> it escapes
+        // FILES_PATH. Skip it and flag loudly (defense in depth against traversal)
+        if ($fullPath === false) {
             echo "SECURITY WARNING: Skipping invalid path: {$share['file_path']}\n";
             $errorCount++;
             continue;
         }
-        
-        if (file_exists($fullPath)) {
-            if (is_dir($fullPath)) {
-                if (deleteDirectory($fullPath)) {
-                    echo "✓ Deleted folder: {$share['file_path']}\n";
-                    $deletedCount++;
-                } else {
-                    echo "✗ ERROR: Failed to delete folder: {$share['file_path']}\n";
-                    $errorCount++;
-                    continue;
-                }
+
+        if (is_dir($fullPath)) {
+            if (deleteDirectory($fullPath)) {
+                echo "✓ Deleted folder: {$share['file_path']}\n";
+                $deletedCount++;
             } else {
-                if (unlink($fullPath)) {
-                    echo "✓ Deleted file: {$share['file_path']}\n";
-                    $deletedCount++;
-                } else {
-                    echo "✗ ERROR: Failed to delete file: {$share['file_path']}\n";
-                    $errorCount++;
-                    continue;
-                }
+                echo "✗ ERROR: Failed to delete folder: {$share['file_path']}\n";
+                $errorCount++;
+                continue;
             }
         } else {
-            echo "- File already deleted: {$share['file_path']}\n";
+            if (unlink($fullPath)) {
+                echo "✓ Deleted file: {$share['file_path']}\n";
+                $deletedCount++;
+            } else {
+                echo "✗ ERROR: Failed to delete file: {$share['file_path']}\n";
+                $errorCount++;
+                continue;
+            }
         }
-        
+
         // Delete share from database
         $db->deleteShare($share['hash']);
         echo "  Removed share link: {$share['hash']}\n";

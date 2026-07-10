@@ -38,8 +38,8 @@ function tr($key) {
     return $lang[$key] ?? $key;
 }
 
-// Generate random hash for shares
-function generateHash($length = 16) {
+// Generate random hash for shares (32 hex chars = 128 bits of entropy)
+function generateHash($length = 32) {
     return bin2hex(random_bytes($length / 2));
 }
 
@@ -166,4 +166,21 @@ function resolveUserPath($allowedPath, $relativePath) {
 
     return $fullPath;
 }
-?>
+
+// Resolve a path relative to FILES_PATH to a safe, existing absolute path within
+// FILES_PATH, or false if it does not exist or escapes the root. Shared by the
+// public download/share endpoints and cleanup (defense in depth against traversal).
+function resolveWithinFiles($relativePath) {
+    $realBase = realpath(FILES_PATH);
+    $fullPath = realpath(FILES_PATH . '/' . ltrim($relativePath, '/'));
+
+    if ($fullPath === false || $realBase === false) {
+        return false;
+    }
+
+    if ($fullPath !== $realBase && strpos($fullPath, $realBase . '/') !== 0) {
+        return false;
+    }
+
+    return $fullPath;
+}
