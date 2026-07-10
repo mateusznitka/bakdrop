@@ -1,5 +1,5 @@
 <p style="text-align: center">
-  <img src="assets/logo.png" alt="Bakdrop" style="max-width: 420px; width: 100%">
+  <img src="assets/logo.png" alt="Bakdrop" style="max-width: 500px; width: 100%">
 </p>
 
 Bakdrop is a small, self-hosted web app for sharing files that already sit on a
