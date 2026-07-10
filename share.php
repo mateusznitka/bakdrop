@@ -57,5 +57,16 @@ if ($passwordRequired && isset($_SESSION['share_' . $hash])) {
 
 $canDownload = $share && (!$passwordRequired || $passwordValid);
 
+// Log the visit (who opened the download page): GET only, valid share. The
+// access log has this too, but keeping it in the audit trail is more convenient.
+if ($share && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    audit('share_view', [
+        'hash' => $hash,
+        'file' => $share['file_path'],
+        'ua' => $_SERVER['HTTP_USER_AGENT'] ?? '-',
+        'referer' => $_SERVER['HTTP_REFERER'] ?? '-',
+    ]);
+}
+
 // Load view
 require __DIR__ . '/views/share.view.php';

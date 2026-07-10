@@ -42,6 +42,13 @@ RUN printf '%s\n' \
     '            AllowOverride All' \
     '            Require all granted' \
     '        </Directory>' \
+    '        # Internal scripts must never be reachable over HTTP' \
+    '        <FilesMatch "\.view\.php$">' \
+    '            Require all denied' \
+    '        </FilesMatch>' \
+    '        <FilesMatch "^(manage|cleanup|config)\.php$">' \
+    '            Require all denied' \
+    '        </FilesMatch>' \
     '    </VirtualHost>' \
     '</IfModule>' \
     > /etc/apache2/sites-available/default-ssl.conf && \

@@ -36,3 +36,21 @@ needs.
 
 **5. Create the first admin:** open `http://your-domain-or-ip/setup.php`. Set up
 HTTPS as you would for any Apache app (see [TLS certificates](tls.md)).
+
+## Optional: block direct access to internal scripts
+
+The Docker image already denies HTTP access to Bakdrop's internal PHP (the view
+templates and the `manage.php` / `cleanup.php` / `config.php` scripts). On a manual
+install you can do the same with an `.htaccess` in the app root (requires
+`AllowOverride All` for that directory). It is optional - the sensitive data
+(database, audit log) already lives outside the web root, and the CLI scripts
+refuse to run over HTTP - but it is good practice:
+
+```apache
+<FilesMatch "\.view\.php$">
+    Require all denied
+</FilesMatch>
+<FilesMatch "^(manage|cleanup|config)\.php$">
+    Require all denied
+</FilesMatch>
+```

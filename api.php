@@ -72,7 +72,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
             'has_password' => !empty($password)
         ]);
     } catch (Exception $e) {
-        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        error_log('Bakdrop API error: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'error' => 'Operation failed']);
     }
     exit;
 }
@@ -127,7 +128,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         audit('password_change', ['status' => 'ok']);
         echo json_encode(['success' => true]);
     } catch (Exception $e) {
-        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        error_log('Bakdrop API error: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'error' => 'Operation failed']);
     }
     exit;
 }
@@ -155,7 +157,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $db->updatePreferences($username, $language, $theme);
         echo json_encode(['success' => true]);
     } catch (Exception $e) {
-        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        error_log('Bakdrop API error: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'error' => 'Operation failed']);
     }
     exit;
 }
@@ -208,7 +211,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
         echo json_encode(['success' => true]);
     } catch (Exception $e) {
-        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        error_log('Bakdrop API error: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'error' => 'Operation failed']);
     }
     exit;
 }

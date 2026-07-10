@@ -19,6 +19,8 @@ Every line starts with the same three fields, then event-specific fields:
 - **actor** - who did it: the logged-in admin's username, `cli` for `manage.php`,
   `system` for the cleanup job, or `-` for anonymous end users downloading a link.
 - **ip** - the client IP, or `-` when not applicable (CLI, cleanup).
+- **ua** / **referer** - on `share_view` and `share_download`, the visitor's
+  User-Agent and Referer header (also captured in the Apache access log).
 
 Values containing spaces, quotes, or `=` are wrapped in double quotes. Control
 characters and newlines are stripped, so a crafted filename cannot forge or split
@@ -30,7 +32,8 @@ a log line.
 |---|---|---|
 | `login` | `status=ok\|fail`, `actor=<username>` | An admin logs in (or fails to). |
 | `share_create` | `hash`, `file`, `pw=yes\|no`, `expires=<time>\|-`, `del=after_download\|scheduled\|-` | An admin creates a share link. |
-| `share_download` | `hash`, `file`, `status=complete\|aborted\|partial` | An end user downloads a shared link. |
+| `share_view` | `hash`, `file`, `ua`, `referer` | An end user opens a share download page. |
+| `share_download` | `hash`, `file`, `status=complete\|aborted\|partial`, `ua`, `referer` | An end user downloads a shared link. |
 | `share_pw` | `status=fail`, `hash` | A wrong password is entered for a protected link. |
 | `share_delete` | `hash`, `file` | An admin deletes a share link. |
 | `password_change` | `status=ok` | An admin changes their own password. |
@@ -109,3 +112,43 @@ Because the format is logfmt, any log shipper
 [Filebeat](https://www.elastic.co/beats/filebeat)) can tail `audit.log` and
 forward it. No special parser is needed - the `key=value` pairs map directly to
 structured fields.
+
+## Blocking brute-force attempts (fail2ban)
+
+Bakdrop does not throttle logins itself, but every failed attempt is written to
+the audit log with the client IP, so [fail2ban](https://github.com/fail2ban/fail2ban)
+can watch that log and ban abusive IPs at the firewall. This covers both admin
+logins (`event=login status=fail`) and wrong passwords on protected links
+(`event=share_pw status=fail`).
+
+**1. Filter** - create `/etc/fail2ban/filter.d/bakdrop.conf`:
+
+```ini
+[Definition]
+# Bakdrop writes ISO 8601 timestamps, which fail2ban auto-detects.
+failregex = ^\S+ event=login actor=(?:"[^"]*"|\S+) ip=<HOST> status=fail
+            ^\S+ event=share_pw actor=(?:"[^"]*"|\S+) ip=<HOST> status=fail
+```
+
+**2. Jail** - add to `/etc/fail2ban/jail.local`:
+
+```ini
+[bakdrop]
+enabled  = true
+filter   = bakdrop
+logpath  = /var/log/bakdrop/audit.log
+maxretry = 5
+findtime = 10m
+bantime  = 1h
+```
+
+Check the filter against your log with:
+
+```bash
+fail2ban-regex /var/log/bakdrop/audit.log /etc/fail2ban/filter.d/bakdrop.conf
+```
+
+> **Docker:** the audit log lives on the `bakdrop_logs` named volume, which host
+> fail2ban cannot read directly. Bind-mount it to a host path instead - change the
+> app service volume to `- /var/log/bakdrop:/var/log/bakdrop` - and point `logpath`
+> there.

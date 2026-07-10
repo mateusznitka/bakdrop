@@ -180,6 +180,8 @@ audit('share_download', [
     'hash' => $hash,
     'file' => $share['file_path'],
     'status' => $downloadStatus,
+    'ua' => $_SERVER['HTTP_USER_AGENT'] ?? '-',
+    'referer' => $_SERVER['HTTP_REFERER'] ?? '-',
 ]);
 
 // Delete file/link if delete_after_download is enabled

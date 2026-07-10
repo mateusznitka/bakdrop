@@ -379,6 +379,12 @@
             return response.json();
         }
 
+        // Wrap a value in single quotes for a POSIX shell, so passwords with
+        // spaces or special characters don't break the copied curl/wget command
+        function shellQuote(s) {
+            return "'" + String(s).replace(/'/g, "'\\''") + "'";
+        }
+
         // Wire up buttons carrying user-controlled data (file names/paths) via
         // data-* attributes - never inline them into onclick JS: the browser
         // HTML-decodes attribute values before parsing, so escaping can't help there
@@ -476,8 +482,8 @@
                 if (result.has_password) {
                     const pwd = document.getElementById('sharePassword').value;
                     document.getElementById('cliCommands').style.display = 'block';
-                    document.getElementById('curlCommand').value = `curl -u ":${pwd}" -JO "${result.direct_link}"`;
-                    document.getElementById('wgetCommand').value = `wget --content-disposition --user="" --password="${pwd}" "${result.direct_link}"`;
+                    document.getElementById('curlCommand').value = `curl -u ${shellQuote(':' + pwd)} -JO "${result.direct_link}"`;
+                    document.getElementById('wgetCommand').value = `wget --content-disposition --user='' --password=${shellQuote(pwd)} "${result.direct_link}"`;
                 } else {
                     document.getElementById('cliCommands').style.display = 'block';
                     document.getElementById('curlCommand').value = `curl -JO "${result.direct_link}"`;
