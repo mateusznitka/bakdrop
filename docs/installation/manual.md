@@ -4,7 +4,7 @@
 `/var/www/html/bakdrop`. Use the release package, not a git clone.
 
 **2. Configure.** Edit `config.php` (see
-[Configuration reference](configuration.md) for every setting).
+[Configuration reference](../configuration.md) for every setting).
 
 **3. Set permissions.** The web server user (`www-data`) needs read and write
 access on the app, the database directory, the log directory, and the files
@@ -35,7 +35,7 @@ Without this, scheduled file deletion never happens. Adjust the interval to your
 needs.
 
 **5. Create the first admin:** open `http://your-domain-or-ip/setup.php`. Set up
-HTTPS as you would for any Apache app (see [TLS certificates](tls.md)).
+HTTPS as you would for any Apache app (see [TLS certificates](../tls.md)).
 
 ## Optional: block direct access to internal scripts
 

@@ -37,11 +37,14 @@ theme:
 
 nav:
   - Home: index.md
-  - Requirements: requirements.md
+  - Requirements:
+      - requirements/index.md
+      - Docker: requirements/docker.md
+      - Manual (Apache): requirements/manual.md
   - Installation:
-      - installation.md
-      - Docker: install-docker.md
-      - Manual (Apache): install-manual.md
+      - installation/index.md
+      - Docker: installation/docker.md
+      - Manual (Apache): installation/manual.md
   - Configuration: configuration.md
   - Users & admin model: users.md
   - Automatic cleanup: cleanup.md

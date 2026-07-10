@@ -7,26 +7,30 @@ warning, use your own certificate. You have three options.
 
 ## Docker: mount your own certificate
 
-The image looks for its certificate and key at fixed paths:
+The image already serves HTTPS - it just uses a self-signed certificate, read from
+two fixed paths inside the container:
 
 - certificate: `/etc/ssl/certs/bakdrop.crt`
 - private key: `/etc/ssl/private/bakdrop.key`
 
-The simplest way to use your own is to mount your files over those two paths, with
-no rebuild needed. Put your certificate and key on the host (for example next to
-`compose.prod.yml` in a `certs/` folder) and add them to the app service's
-`volumes:` in `compose.prod.yml`:
+To use your own certificate, mount your files over those two paths.
+
+**1. Put your certificate and key on the host**, for example in a `certs/` folder
+next to `compose.prod.yml`.
+
+**2. Mount them** by adding two lines to the app service's `volumes:` in
+`compose.prod.yml` (keep the existing volumes, just append the last two):
 
 ```yaml
 volumes:
   - bakdrop_data:/var/lib/bakdrop
   - bakdrop_logs:/var/log/bakdrop
   - /bakdrop:/bakdrop
-  - ./certs/bakdrop.crt:/etc/ssl/certs/bakdrop.crt:ro
-  - ./certs/bakdrop.key:/etc/ssl/private/bakdrop.key:ro
+  - ./certs/bakdrop.crt:/etc/ssl/certs/bakdrop.crt:ro   # your certificate
+  - ./certs/bakdrop.key:/etc/ssl/private/bakdrop.key:ro   # your private key
 ```
 
-Then recreate the container:
+**3. Recreate the container** (note: no `--build`):
 
 ```bash
 docker compose -f compose.prod.yml up -d

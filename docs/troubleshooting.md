@@ -40,11 +40,6 @@ tool, or normalize ownership after a restore:
 sudo chown -R $(id -u):$(id -g) /bakdrop/restored-folder
 ```
 
-## The favicon or a style change does not update
-
-Browsers cache favicons and static assets aggressively. Do a hard reload
-(Ctrl+Shift+R) to see changes.
-
 ## Browser warns about the certificate
 
 The Docker image uses a self-signed certificate. This warning is expected for

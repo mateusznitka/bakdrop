@@ -54,11 +54,11 @@ This starts two containers:
   certificate, which is expected for internal use.
 - `bakdrop-cleanup` - a sidecar that runs `cleanup.php` every hour to remove
   expired links and delete files scheduled for deletion. See
-  [Automatic cleanup](cleanup.md).
+  [Automatic cleanup](../cleanup.md).
 
 **5. Create the first admin:** open `https://your-ip-or-domain/setup.php` and
 follow the prompts.
 
 !!! warning "PUID / PGID are build arguments"
     Changing them later needs a rebuild and a one-time ownership fix on the
-    existing volumes. See [Troubleshooting](troubleshooting.md).
+    existing volumes. See [Troubleshooting](../troubleshooting.md).
