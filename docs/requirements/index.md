@@ -1,7 +1,7 @@
 # Requirements
 
 Bakdrop can be installed in one of **two ways**, and each has its own small set of
-requirements. Pick whichever suits you - you do **not** need both:
+requirements.
 
 - **[Docker](docker.md)** - the easiest path. All you need is Docker itself; the
   image bundles PHP, Apache, and every extension. Recommended if you already run

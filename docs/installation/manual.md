@@ -1,7 +1,8 @@
 # Manual installation (Apache)
 
-**1. Download and extract** the latest release into your web root, for example
-`/var/www/html/bakdrop`. Use the release package, not a git clone.
+**1. Download and extract** the latest release from <https://github.com/mateusznitka/bakdrop/releases> into your web root, for example
+`/var/www/html/bakdrop`. Use the release package, not
+a git clone - the release ships with dependencies already bundled.
 
 **2. Configure.** Edit `config.php` (see
 [Configuration reference](../configuration.md) for every setting).
