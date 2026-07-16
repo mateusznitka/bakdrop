@@ -39,18 +39,34 @@ define('BASE_URL',     getenv('BASE_URL')     ?: 'https://files.example.com');
   defaults are fine. See the [Configuration reference](../configuration.md).
 
 **3. Set permissions.** The web server user (`www-data`) needs read and write
-access on the app, the database directory, the log directory, and the files
-directory:
+access on the app, the database directory, and the log directory:
 
 ```bash
 sudo chown -R www-data:www-data /var/www/html/bakdrop
 sudo mkdir -p /var/lib/bakdrop && sudo chown www-data:www-data /var/lib/bakdrop
 sudo mkdir -p /var/log/bakdrop && sudo chown www-data:www-data /var/log/bakdrop
-sudo mkdir -p /bakdrop && sudo chown www-data:www-data /bakdrop
 ```
 
 The `/var/log/bakdrop` step matters: `/var/log` itself is owned by root, so
 without this the app cannot write its audit log and the writes fail silently.
+
+The **files directory** (`/bakdrop` by default) is different: **you** need to copy
+files into it, and **`www-data`** needs to read them out (and delete them for
+"delete after download" and scheduled cleanup). So both identities need access. The
+cleanest way, which also applies to anything you add later, is an ACL:
+
+```bash
+sudo mkdir -p /bakdrop
+sudo chown www-data:www-data /bakdrop
+# give you and www-data full access - the second line (-d) makes it the default
+# for files/folders you add in the future, so you never hit this again
+sudo setfacl -R -m   u:"$USER":rwX -m u:www-data:rwX /bakdrop
+sudo setfacl -R -d -m u:"$USER":rwX -m u:www-data:rwX /bakdrop
+```
+
+Now you can copy data into `/bakdrop` as yourself (no `sudo`), and Bakdrop can serve
+and delete it. ACLs need a filesystem that supports them - ext4 and xfs do by
+default; if `setfacl` is missing, install the `acl` package.
 
 **4. Set up the Apache site.** Serve the app directory through a virtual host.
 `mod_php` is enabled automatically by the PHP package, and `mod_ssl` is enabled by

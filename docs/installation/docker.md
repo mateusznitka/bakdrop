@@ -41,6 +41,41 @@ volumes:
 `PUID` / `PGID` should match the owner of your files directory. If you leave them
 at the default (33 = www-data), you will need `sudo` to write into `/bakdrop`.
 
+??? note "Alternative: several admins uploading files"
+    The setup above lets one host user (`PUID`) write to `/bakdrop`. If several
+    people need to drop files in, bind the directory to a **shared group** instead
+    and point the container's `PGID` at it.
+
+    On the host, create the group, add each admin, and grant the group access to
+    `/bakdrop` with an ACL (so it also covers files added later):
+
+    ```bash
+    sudo groupadd bakdrop                 # shared group
+    sudo usermod -aG bakdrop admin1       # add each admin
+    sudo usermod -aG bakdrop admin2
+    getent group bakdrop                  # note the GID, e.g. bakdrop:x:1500:
+
+    sudo chown -R root:bakdrop /bakdrop
+    sudo chmod -R 2775 /bakdrop
+    sudo setfacl -R -m   g:bakdrop:rwX /bakdrop
+    sudo setfacl -R -d -m g:bakdrop:rwX /bakdrop
+    ```
+
+    Then set `PGID` in `compose.yml` to that group's GID and rebuild
+    (`docker compose up -d --build`):
+
+    ```yaml
+    build:
+      args:
+        PGID: 1500     # the shared 'bakdrop' group GID (PUID can stay as-is)
+    ```
+
+    Every admin in the group can now copy into `/bakdrop` as themselves, and the
+    app - which runs in that group - serves and deletes all of it, no matter who
+    added it. Admins must log out and back in after being added to the group. (ACLs
+    need `setfacl` from the `acl` package and a filesystem that supports them, such
+    as ext4 or xfs.)
+
 **4. Start it:**
 
 ```bash
