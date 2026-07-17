@@ -68,6 +68,37 @@ Now you can copy data into `/bakdrop` as yourself (no `sudo`), and Bakdrop can s
 and delete it. ACLs need a filesystem that supports them - ext4 and xfs do by
 default; if `setfacl` is missing, install the `acl` package.
 
+??? note "Alternative: letting several people upload"
+    The commands above grant access to a single user (`$USER`). Two other setups,
+    both replacing just the two `setfacl` lines:
+
+    **Several admins** - grant a shared group instead of one user:
+
+    ```bash
+    sudo groupadd bakdrop                 # shared group
+    sudo usermod -aG bakdrop admin1       # add each admin
+    sudo usermod -aG bakdrop admin2
+
+    sudo setfacl -R -m   g:bakdrop:rwX -m u:www-data:rwX /bakdrop
+    sudo setfacl -R -d -m g:bakdrop:rwX -m u:www-data:rwX /bakdrop
+    ```
+
+    Everyone in the group uploads as themselves, nobody else can, and Bakdrop still
+    serves and deletes all of it. Admins must log out and back in after being added
+    to the group.
+
+    **Anyone on the host** - make the directory world-writable and keep the ACL, so
+    Bakdrop can still manage whatever lands there:
+
+    ```bash
+    sudo chmod 777 /bakdrop
+    sudo setfacl -R -m   u:www-data:rwX /bakdrop
+    sudo setfacl -R -d -m u:www-data:rwX /bakdrop
+    ```
+
+    This lets any local user read and modify the shared files, so only do it on a
+    host where that is acceptable.
+
 **4. Set up the Apache site.** Serve the app directory through a virtual host.
 `mod_php` is enabled automatically by the PHP package, and `mod_ssl` is enabled by
 Certbot in the next step, so there is nothing to enable by hand here.
