@@ -84,8 +84,11 @@ default; if `setfacl` is missing, install the `acl` package.
     ```
 
     Everyone in the group uploads as themselves, nobody else can, and Bakdrop still
-    serves and deletes all of it. Admins must log out and back in after being added
-    to the group.
+    serves and deletes all of it.
+
+    Group membership is only read at login, so each admin has to log out and back in
+    (a fresh SSH session, not a new terminal tab) before they can write. `id` should
+    list `bakdrop`; if it does not, the session is still the old one.
 
     **Anyone on the host** - make the directory world-writable and keep the ACL, so
     Bakdrop can still manage whatever lands there:

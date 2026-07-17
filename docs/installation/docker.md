@@ -72,9 +72,12 @@ at the default (33 = www-data), you will need `sudo` to write into `/bakdrop`.
 
     Every admin in the group can now copy into `/bakdrop` as themselves, and the
     app - which runs in that group - serves and deletes all of it, no matter who
-    added it. Admins must log out and back in after being added to the group. (ACLs
-    need `setfacl` from the `acl` package and a filesystem that supports them, such
-    as ext4 or xfs.)
+    added it. (ACLs need `setfacl` from the `acl` package and a filesystem that
+    supports them, such as ext4 or xfs.)
+
+    Group membership is only read at login, so each admin has to log out and back in
+    (a fresh SSH session, not a new terminal tab) before they can write. `id` should
+    list `bakdrop`; if it does not, the session is still the old one.
 
 **4. Start it:**
 
