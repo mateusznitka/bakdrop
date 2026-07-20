@@ -50,53 +50,47 @@ sudo mkdir -p /var/log/bakdrop && sudo chown www-data:www-data /var/log/bakdrop
 The `/var/log/bakdrop` step matters: `/var/log` itself is owned by root, so
 without this the app cannot write its audit log and the writes fail silently.
 
-The **files directory** (`/bakdrop` by default) is different: **you** need to copy
-files into it, and **`www-data`** needs to read them out (and delete them for
-"delete after download" and scheduled cleanup). So both identities need access. The
-cleanest way, which also applies to anything you add later, is an ACL:
+The **files directory** (`/bakdrop` by default) is different. Two sides need it:
+whoever puts files there (you, another admin, or a backup agent), and `www-data`,
+which reads them out and deletes them for "delete after download" and scheduled
+cleanup. Give both a shared group:
 
 ```bash
+sudo groupadd bakdrop
+sudo usermod -aG bakdrop www-data      # the app
+sudo usermod -aG bakdrop "$USER"       # you, and every other admin who uploads
+
 sudo mkdir -p /bakdrop
-sudo chown www-data:www-data /bakdrop
-# give you and www-data full access - the second line (-d) makes it the default
-# for files/folders you add in the future, so you never hit this again
-sudo setfacl -R -m   u:"$USER":rwX -m u:www-data:rwX /bakdrop
-sudo setfacl -R -d -m u:"$USER":rwX -m u:www-data:rwX /bakdrop
+sudo chgrp -R bakdrop /bakdrop
+sudo chmod -R g=rwX,o= /bakdrop
+sudo chmod g+s /bakdrop
 ```
 
-Now you can copy data into `/bakdrop` as yourself (no `sudo`), and Bakdrop can serve
-and delete it. ACLs need a filesystem that supports them - ext4 and xfs do by
-default; if `setfacl` is missing, install the `acl` package.
+Everyone in the group uploads as themselves, nobody outside it gets in, and
+Bakdrop serves and deletes all of it regardless of who added it.
 
-??? note "Alternative: letting several people upload"
-    The commands above grant access to a single user (`$USER`). Two other setups,
-    both replacing just the two `setfacl` lines:
+Group membership is only read at login, so each admin has to log out and back in
+(a fresh SSH session, not a new terminal tab) before they can write. `id` should
+list `bakdrop`; if it does not, the session is still the old one.
 
-    **Several admins** - grant a shared group instead of one user:
+!!! warning "This is not enough on its own"
+    Tools that write files with the permissions of the source system undo the
+    above. A backup restore is the common case: an agent running as root drops a
+    root-owned, `0600` tree that Bakdrop cannot read, so shares show up as empty
+    folders. **Step 6 adds a cron job that keeps this in order automatically** -
+    do not skip it.
 
-    ```bash
-    sudo groupadd bakdrop                 # shared group
-    sudo usermod -aG bakdrop admin1       # add each admin
-    sudo usermod -aG bakdrop admin2
+??? note "Alternative: who is allowed to upload"
+    The setup above is the middle ground. The other two are one change each:
 
-    sudo setfacl -R -m   g:bakdrop:rwX -m u:www-data:rwX /bakdrop
-    sudo setfacl -R -d -m g:bakdrop:rwX -m u:www-data:rwX /bakdrop
+    **Only root** - do not add anyone to the `bakdrop` group. `www-data` stays in
+    it, so the app still works, but writing to `/bakdrop` then needs `sudo`.
+
+    **Anyone on the host** - make the tree world-writable by setting `BAKDROP_MODE`
+    in the cron job from step 6:
+
     ```
-
-    Everyone in the group uploads as themselves, nobody else can, and Bakdrop still
-    serves and deletes all of it.
-
-    Group membership is only read at login, so each admin has to log out and back in
-    (a fresh SSH session, not a new terminal tab) before they can write. `id` should
-    list `bakdrop`; if it does not, the session is still the old one.
-
-    **Anyone on the host** - make the directory world-writable and keep the ACL, so
-    Bakdrop can still manage whatever lands there:
-
-    ```bash
-    sudo chmod 777 /bakdrop
-    sudo setfacl -R -m   u:www-data:rwX /bakdrop
-    sudo setfacl -R -d -m u:www-data:rwX /bakdrop
+    * * * * * BAKDROP_MODE="g=rwX,o=rwX" flock -n /run/lock/bakdrop-fixperms /usr/local/sbin/bakdrop-fixperms
     ```
 
     This lets any local user read and modify the shared files, so only do it on a
@@ -148,8 +142,11 @@ sudo certbot --apache -d bakdrop.example.com
 See [TLS certificates](../tls.md) for the full picture and other options (bringing
 your own certificate, or terminating TLS in a reverse proxy).
 
-**6. Set up automatic cleanup.** Add an hourly cron job, running as the web
-server user so the database keeps consistent ownership:
+**6. Set up the background jobs.** Bakdrop needs two, and they run as different
+users.
+
+**Cleanup**, hourly, as the web server user so the database keeps consistent
+ownership:
 
 ```bash
 sudo crontab -u www-data -e
@@ -159,8 +156,30 @@ sudo crontab -u www-data -e
 0 * * * * php /var/www/html/bakdrop/cleanup.php >> /var/log/bakdrop/cleanup.log 2>&1
 ```
 
-Without this, scheduled file deletion never happens. Adjust the interval to your
-needs.
+Without this, expired links stay live and scheduled file deletion never happens.
+
+**Permissions**, every minute, as root. This is what makes restored files show up
+on their own. Install the script that ships with the release, then add the job:
+
+```bash
+sudo install -m 0755 -o root -g root \
+    /var/www/html/bakdrop/bakdrop-fixperms /usr/local/sbin/bakdrop-fixperms
+sudo crontab -e
+```
+
+```
+* * * * * flock -n /run/lock/bakdrop-fixperms /usr/local/sbin/bakdrop-fixperms
+```
+
+It resets group ownership and mode across the files directory, so anything that
+lands there becomes readable to Bakdrop within a minute, whoever wrote it and with
+whatever permissions. It is idempotent and cheap: metadata only, roughly 0.7 s per
+100k files. `flock` keeps two runs from overlapping on a very large tree.
+
+If you changed `FILES_PATH` in step 2, pass it as an argument
+(`... /usr/local/sbin/bakdrop-fixperms /srv/files`). The script must run as root:
+only root can reset ownership of files written by someone else. Nothing else gains
+privileges from it - the web server never invokes it.
 
 **7. Create the first admin:** open `https://your-domain-or-ip/setup.php` and
 follow the prompts.

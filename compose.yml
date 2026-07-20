@@ -21,16 +21,19 @@ services:
       - TZ=Europe/Warsaw
     restart: unless-stopped
 
-  # Runs cleanup.php every hour: deletes expired share links and files that
-  # reached their scheduled deletion time (file_delete_at).
-  # Same image and data volumes as app - only the process differs.
+  # Background maintenance. Same image and data volumes as app, only the process
+  # differs. Two jobs, see bakdrop-sidecar:
+  #   every minute - keep the files directory accessible to the app, so files put
+  #                  there by a backup restore (root-owned, unreadable) show up
+  #   every hour   - cleanup.php: expired links and scheduled file deletion
+  # Runs as root: resetting ownership on files written by other tools needs it.
+  # cleanup.php itself is dropped back to www-data.
   cleanup:
     container_name: bakdrop-cleanup
     image: bakdrop
     depends_on:
       - app
-    user: www-data
-    command: sh -c 'while true; do php /var/www/html/cleanup.php; sleep 3600; done'
+    command: bakdrop-sidecar
     volumes:
       - bakdrop_data:/var/lib/bakdrop
       - bakdrop_logs:/var/log/bakdrop

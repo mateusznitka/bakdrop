@@ -6,19 +6,22 @@ a git clone - the release ships with dependencies already bundled.
 
 **2. Prepare the files directory on the host.**
 
-Bakdrop serves files from a directory on the host (default `/bakdrop`). To copy
-files into it without `sudo`, make the container run as your own user. Bind
-mounts match by numeric UID and GID, so find yours first:
+Bakdrop serves files from a directory on the host (default `/bakdrop`):
+
+```bash
+sudo mkdir -p /bakdrop
+```
+
+That is all it needs. The maintenance sidecar takes the tree over from inside the
+container and keeps it that way, so you never set permissions there by hand.
+
+What you do have to get right is **which identity the container runs as**, because
+that is the identity you will share the directory with on the host. Bind mounts
+match by numeric UID and GID, so find yours:
 
 ```bash
 id -u   # e.g. 1000
 id -g   # e.g. 1000
-```
-
-```bash
-sudo mkdir /bakdrop
-sudo chown 1000:1000 /bakdrop
-chmod 750 /bakdrop
 ```
 
 **3. Edit `compose.yml`.** Set the build arguments and environment:
@@ -38,31 +41,29 @@ volumes:
   - /bakdrop:/bakdrop                    # your files directory on the host
 ```
 
-`PUID` / `PGID` should match the owner of your files directory. If you leave them
-at the default (33 = www-data), you will need `sudo` to write into `/bakdrop`.
+`PUID` / `PGID` are the identity the app runs as, and the sidecar hands the files
+directory to that **group** (`PGID`) every minute. Setting `PGID` to your own group
+is what lets you write into `/bakdrop` without `sudo`. Leave them at the default
+(33 = www-data) and every copy will need `sudo`.
+
+!!! tip "Restores are handled for you"
+    A backup agent restoring as root drops a root-owned, unreadable tree into
+    `/bakdrop`. The sidecar picks it up within a minute and the files just appear in
+    the UI. Nothing to run by hand, and the person doing the restore needs no shell
+    access to the host at all.
 
 ??? note "Alternative: several admins uploading files"
-    The setup above lets one host user (`PUID`) write to `/bakdrop`. If several
-    people need to drop files in, bind the directory to a **shared group** instead
-    and point the container's `PGID` at it.
-
-    On the host, create the group, add each admin, and grant the group access to
-    `/bakdrop` with an ACL (so it also covers files added later):
+    `PGID` is a group, so it can just as well be a **shared** one. On the host,
+    create it and add each admin:
 
     ```bash
     sudo groupadd bakdrop                 # shared group
     sudo usermod -aG bakdrop admin1       # add each admin
     sudo usermod -aG bakdrop admin2
     getent group bakdrop                  # note the GID, e.g. bakdrop:x:1500:
-
-    sudo chown -R root:bakdrop /bakdrop
-    sudo chmod -R 2775 /bakdrop
-    sudo setfacl -R -m   g:bakdrop:rwX /bakdrop
-    sudo setfacl -R -d -m g:bakdrop:rwX /bakdrop
     ```
 
-    Then set `PGID` in `compose.yml` to that group's GID and rebuild
-    (`docker compose up -d --build`):
+    Then point `PGID` at that GID and rebuild (`docker compose up -d --build`):
 
     ```yaml
     build:
@@ -72,8 +73,7 @@ at the default (33 = www-data), you will need `sudo` to write into `/bakdrop`.
 
     Every admin in the group can now copy into `/bakdrop` as themselves, and the
     app - which runs in that group - serves and deletes all of it, no matter who
-    added it. (ACLs need `setfacl` from the `acl` package and a filesystem that
-    supports them, such as ext4 or xfs.)
+    added it.
 
     Group membership is only read at login, so each admin has to log out and back in
     (a fresh SSH session, not a new terminal tab) before they can write. `id` should
@@ -90,9 +90,10 @@ This starts two containers:
 - `bakdrop` - the app. Uses a self-signed certificate and listens on port 80
   (redirects to HTTPS) and 443 (HTTPS). Your browser will warn about the
   certificate, which is expected for internal use.
-- `bakdrop-cleanup` - a sidecar that runs `cleanup.php` every hour to remove
-  expired links and delete files scheduled for deletion. See
-  [Automatic cleanup](../cleanup.md).
+- `bakdrop-cleanup` - a maintenance sidecar with two jobs: every minute it keeps
+  the files directory accessible to the app (so restored files show up on their
+  own), and every hour it runs `cleanup.php` to remove expired links and files
+  scheduled for deletion. See [Automatic cleanup](../cleanup.md).
 
 **5. Create the first admin:** open `https://your-ip-or-domain/setup.php` and
 follow the prompts.

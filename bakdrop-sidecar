@@ -1,0 +1,31 @@
+#!/bin/sh
+# bakdrop-sidecar - background maintenance loop for the Docker deployment.
+#
+# Every minute: bakdrop-fixperms, so files put into the files directory by any
+#               tool (a backup restore lands root-owned and unreadable) become
+#               visible to the app on their own.
+# Every hour:   cleanup.php, which drops expired share links and deletes files
+#               that reached their scheduled deletion time.
+#
+# Runs as root, because only root can reset ownership on files written by other
+# tools. cleanup.php is dropped back to www-data so the database keeps consistent
+# ownership. Neither the web server nor PHP ever gains privileges from this: the
+# loop only ever runs these two fixed commands.
+
+set -u
+
+# Force a cleanup run on the first pass, then once an hour.
+minutes=60
+
+while true; do
+    bakdrop-fixperms || echo "bakdrop-sidecar: fixperms failed" >&2
+
+    if [ "$minutes" -ge 60 ]; then
+        su -s /bin/sh www-data -c 'php /var/www/html/cleanup.php' ||
+            echo "bakdrop-sidecar: cleanup failed" >&2
+        minutes=0
+    fi
+
+    minutes=$((minutes + 1))
+    sleep 60
+done

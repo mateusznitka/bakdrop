@@ -1,0 +1,50 @@
+#!/bin/sh
+# bakdrop-fixperms - keep the files directory accessible to Bakdrop.
+#
+# Backup and restore tools write files with the permissions of the source system.
+# A Windows backup restored by an agent running as root lands as root-owned 0700
+# directories and 0600 files, which the web server user can neither read, serve
+# nor delete. The same goes for anything unpacked with `tar -p` or copied with
+# `cp -p`. This script resets group ownership and mode on the files directory, so
+# the app and the admins who upload there keep access no matter what put the
+# files there.
+#
+# Run it from cron every minute (see the docs). It is idempotent, touches
+# metadata only (~0.7s per 100k files) and is safe to run as root over a
+# directory that admins can write to: chown -R does a physical walk and chmod -R
+# skips symbolic links, so a planted link cannot redirect it outside the tree.
+#
+# Usage: bakdrop-fixperms [files-path]
+
+set -eu
+
+# Directory Bakdrop serves files from. Must match FILES_PATH in config.php.
+FILES_PATH="${1:-${FILES_PATH:-/bakdrop}}"
+
+# Group owning the shared files. The web server user and every admin who uploads
+# must be a member of it.
+GROUP="${BAKDROP_GROUP:-bakdrop}"
+
+# Permissions applied to the whole tree. Capital X means "execute on directories
+# only", so data files never become executable.
+#   g=rwX,o=     - only members of the group have access (default)
+#   g=rwX,o=rwX  - anyone on the host can read and write
+MODE="${BAKDROP_MODE:-g=rwX,o=}"
+
+[ -d "$FILES_PATH" ] || {
+    echo "bakdrop-fixperms: '$FILES_PATH' is not a directory" >&2
+    exit 1
+}
+
+getent group "$GROUP" >/dev/null 2>&1 || {
+    echo "bakdrop-fixperms: group '$GROUP' does not exist" >&2
+    exit 1
+}
+
+chown -R ":$GROUP" -- "$FILES_PATH"
+chmod -R "$MODE" -- "$FILES_PATH"
+
+# setgid on every directory, so files added between two runs already land in the
+# shared group and stay readable for the app without waiting for the next one.
+# Directories only: on a file the bit means something else entirely.
+find "$FILES_PATH" -xdev -type d -exec chmod g+s {} +

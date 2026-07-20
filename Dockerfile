@@ -58,4 +58,14 @@ COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader
 
 COPY . .
+
+# Maintenance scripts belong to root and must not sit in the web root.
+# The sidecar container keeps the files directory accessible to the app, so a
+# restore that lands root-owned does not stay invisible - see bakdrop-fixperms.
+# In the container the app's group is www-data, remapped to PGID above.
+ENV BAKDROP_GROUP=www-data
+RUN install -m 0755 -o root -g root bakdrop-fixperms /usr/local/sbin/bakdrop-fixperms \
+    && install -m 0755 -o root -g root bakdrop-sidecar /usr/local/sbin/bakdrop-sidecar \
+    && rm bakdrop-fixperms bakdrop-sidecar
+
 RUN chown -R www-data:www-data /var/www/html
