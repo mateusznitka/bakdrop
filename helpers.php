@@ -1,4 +1,14 @@
 <?php
+// Keep PHP errors out of the HTTP response: a leaked warning corrupts file
+// downloads (extra bytes past Content-Length, so the browser rejects the whole
+// response) and exposes filesystem paths. They are still written to the log.
+// Under CLI (the cleanup cron) errors stay visible on stderr so the job can
+// report them. Set BAKDROP_DEBUG=1 to show errors while developing.
+if (PHP_SAPI !== 'cli' && getenv('BAKDROP_DEBUG') !== '1') {
+    ini_set('display_errors', '0');
+    ini_set('log_errors', '1');
+}
+
 session_start([
     'cookie_httponly' => true,
     'cookie_secure'   => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
@@ -125,14 +135,23 @@ function formatBytes($bytes, $precision = 2) {
 
 // Delete directory
 function deleteDirectory($dir) {
+    // Remove a symlink as a link, never follow it. This must come first:
+    // is_dir() follows the link (so a link to an external directory would get its
+    // contents deleted), and file_exists() is false for a dangling link (so a
+    // Windows junction restored as a broken symlink - common in ProgramData -
+    // would be skipped, leaving the parent non-empty and rmdir failing).
+    if (is_link($dir)) {
+        return unlink($dir);
+    }
+
     if (!file_exists($dir)) {
         return true;
     }
-    
+
     if (!is_dir($dir)) {
         return unlink($dir);
     }
-    
+
     foreach (scandir($dir) as $item) {
         if ($item == '.' || $item == '..') {
             continue;
@@ -148,15 +167,22 @@ function deleteDirectory($dir) {
 
 // Resolve wheter user path is in allowed path
 function resolveUserPath($allowedPath, $relativePath) {
+    $realFilesRoot = realpath(FILES_PATH);
     $basePath = rtrim(FILES_PATH . '/' . ltrim($allowedPath, '/'), '/');
     $realBase = realpath($basePath);
     $fullPath = realpath($basePath . '/' . ltrim($relativePath, '/'));
 
-    if ($fullPath === false || $realBase === false) {
+    if ($fullPath === false || $realBase === false || $realFilesRoot === false) {
         return false;
     }
 
     if ($fullPath !== $realBase && strpos($fullPath, $realBase . '/') !== 0) {
+        return false;
+    }
+
+    // Also clamp to FILES_PATH itself, so a malformed allowed_path (e.g. one
+    // containing '..') can never grant access outside the files root.
+    if ($fullPath !== $realFilesRoot && strpos($fullPath, $realFilesRoot . '/') !== 0) {
         return false;
     }
 

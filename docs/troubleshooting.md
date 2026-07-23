@@ -49,8 +49,25 @@ ls -ld /bakdrop/restored-folder
 ```
 
 Healthy output has the shared group and group access, e.g.
-`drwxrws--- root bakdrop`. If you instead see `drwx------ root root`, the job is not
-working. Run it by hand to see the error:
+`drwxrws--- root bakdrop`.
+
+**If the directory already looks healthy** (`drwxrws--- root bakdrop`) but the app
+still lists it empty, the problem is not the files, it is the web server: its
+process is not in the `bakdrop` group yet. Group membership is read only when the
+process starts, so after adding `www-data` to the group Apache must be **restarted**
+(a reload keeps the old group):
+
+```bash
+sudo systemctl restart apache2
+grep Groups /proc/$(pgrep -x apache2 | head -1)/status   # the bakdrop GID must be listed
+```
+
+Do not trust `sudo -u www-data id` here - it starts a fresh process and always shows
+the group, even while the running Apache lacks it. In Docker the app container picks
+the group up on `docker compose up -d`, so this only bites manual installs.
+
+**If instead you see `drwx------ root root`**, the `bakdrop-fixperms` job that should
+have fixed this did not run. Run it by hand to see the error:
 
 ```bash
 sudo /usr/local/sbin/bakdrop-fixperms      # manual install

@@ -73,6 +73,20 @@ Group membership is only read at login, so each admin has to log out and back in
 (a fresh SSH session, not a new terminal tab) before they can write. `id` should
 list `bakdrop`; if it does not, the session is still the old one.
 
+The same applies to Apache: it picks up the new group only when the process
+starts, so **if it is already running, restart it** (a plain reload is not
+enough - it keeps the old group and the app then lists the files directory as
+empty):
+
+```bash
+sudo systemctl restart apache2
+```
+
+On a first install you have not started Apache yet, so step 4 below handles this
+for you. Confirm the running server actually has the group with
+`grep Groups /proc/$(pgrep -x apache2 | head -1)/status` (a `sudo -u www-data id`
+would be misleading here - it starts a fresh process that always shows the group).
+
 !!! warning "This is not enough on its own"
     Tools that write files with the permissions of the source system undo the
     above. A backup restore is the common case: an agent running as root drops a
@@ -117,17 +131,21 @@ Create a virtual host, for example `/etc/apache2/sites-available/bakdrop.conf`:
 Point `DocumentRoot` at the folder you extracted in step 1 and set `ServerName` to
 your domain. `AllowOverride All` lets the optional `.htaccess` (below) take effect.
 
-Enable the site and reload Apache:
+Enable the site and restart Apache:
 
 ```bash
 sudo a2ensite bakdrop
 sudo a2dissite 000-default   # optional: disable the default welcome site
-sudo systemctl reload apache2
+sudo systemctl restart apache2
 ```
+
+Use `restart`, not `reload`: Apache was already running before you added `www-data`
+to the `bakdrop` group in step 3, and only a full restart makes the process pick up
+the new group. A reload would leave the app listing the files directory as empty.
 
 > **RHEL / Fedora / Rocky / AlmaLinux:** there is no `a2ensite`. Put the same
 > `<VirtualHost>` block in a file under `/etc/httpd/conf.d/` (e.g. `bakdrop.conf`)
-> and reload with `sudo systemctl reload httpd`. See the
+> and restart with `sudo systemctl restart httpd`. See the
 > [Apache virtual host docs](https://httpd.apache.org/docs/current/vhosts/) for
 > details.
 

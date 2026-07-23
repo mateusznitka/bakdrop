@@ -93,13 +93,27 @@ if ($isDir) {
         RecursiveIteratorIterator::SELF_FIRST
     );
 
+    $realBase = realpath(FILES_PATH);
+
     foreach ($iterator as $file) {
+        if (!$file->isFile()) {
+            continue;
+        }
+
+        // Never pull a file whose real path is outside the files directory. A
+        // symlink planted in a shared folder (e.g. link -> /etc/shadow) would
+        // otherwise leak its target into the archive; a dangling symlink resolves
+        // to false and is skipped the same way.
+        $realFile = $file->getRealPath();
+        if ($realFile === false ||
+            ($realFile !== $realBase && strpos($realFile, $realBase . '/') !== 0)) {
+            continue;
+        }
+
         $filePath = $file->getPathname();
         $relativePath = substr($filePath, strlen($fullPath) + 1);
 
-        if ($file->isFile()) {
-            $zip->addFileFromPath($relativePath, $filePath);
-        }
+        $zip->addFileFromPath($relativePath, $filePath);
     }
 
     $zip->finish();

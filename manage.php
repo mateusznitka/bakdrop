@@ -90,6 +90,13 @@ function promptPath(): string {
         if ($path === '') {
             return '';
         }
+        // A '..' component would let the user's area escape FILES_PATH (e.g.
+        // '../../etc' resolves to /etc). Split on both slash types so Windows-style
+        // '..\..' is caught too.
+        if (in_array('..', preg_split('#[/\\\\]+#', $path), true)) {
+            echo "Path must stay within FILES_PATH (no '..').\n";
+            continue;
+        }
         $full = rtrim(FILES_PATH, '/') . '/' . ltrim($path, '/');
         if (is_dir($full) || confirm("Folder '$full' does not exist yet. Use it anyway?")) {
             return $path;
