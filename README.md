@@ -10,6 +10,9 @@ Bakdrop is that *somewhere and somehow*: you restore data here and share it with
 
 ![How it works](assets/diagram.png)
 
+> [!IMPORTANT]
+> Bakdrop is still in beta. It should be stable and solid, but still there is some work to do. Feel free to test and open issues.
+
 ## Features
 
 - **Temporary links** - random, unguessable URLs with optional expiration.
@@ -131,6 +134,10 @@ It's an interactive menu, meant for a "super admin" with SSH access. See the
 per-admin paths work.
 
 ## FAQ
+
+**What about files/folders permissions? Can I share files owned by root?**
+
+- For now there is simple cron script which normalize files permissions every minute (they are added to group that bakdrop can safely control). I know this is not ideal and I will take a look on this in the future.
 
 **Is this a Nextcloud / PicoShare / Filebrowser alternative?**
 

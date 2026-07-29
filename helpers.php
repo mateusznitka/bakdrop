@@ -17,7 +17,7 @@ session_start([
 require_once 'config.php';
 
 // App metadata shown in the About dialog (bump APP_VERSION on releases)
-define('APP_VERSION', '1.0.0');
+define('APP_VERSION', '1.1.0');
 define('APP_LICENSE', 'GPL-3.0');
 
 // Baseline security headers for all web responses (no-op under CLI)
